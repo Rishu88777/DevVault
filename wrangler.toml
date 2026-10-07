@@ -1,4 +1,10 @@
-# Cloudflare Pages: `npm run build && npx wrangler pages deploy` publishes ./dist
+# Cloudflare static hosting.
+# Works with `npx wrangler deploy` (Workers Builds) — serves ./dist as static assets.
+# (A Pages project ignores this file and just uses "Build output directory = dist".)
 name = "devcipher"
-pages_build_output_dir = "dist"
 compatibility_date = "2026-01-01"
+
+[assets]
+directory = "./dist"
+# Unknown URLs get dist/404.html (the app shell, which shows the in-app 404 page).
+not_found_handling = "404-page"

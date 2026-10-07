@@ -11,9 +11,9 @@ import { CATEGORIES } from '../src/data/categories'
 import { TOOLS, toolDescription, toolFaq, toolTitle, visibleTools } from '../src/data/tools'
 
 const dist = join(import.meta.dirname, '..', 'dist')
-// SITE_URL wins; otherwise fall back to the URL the hosting platform exposes at build time.
+// SITE_URL wins; otherwise the URL the hosting platform exposes; otherwise the production default.
 const guessed = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.URL ?? process.env.CF_PAGES_URL ?? '')
-const site = (process.env.SITE_URL ?? guessed).replace(/\/$/, '')
+const site = (process.env.SITE_URL ?? (guessed || 'https://devcipher.pages.dev')).replace(/\/$/, '')
 const base = (process.env.VITE_BASE ?? '/').replace(/\/$/, '')
 const html = readFileSync(join(dist, 'index.html'), 'utf8').replace('</head>', site ? `    <meta property="og:image" content="${site}${base}/og.png" />\n    <meta name="twitter:image" content="${site}${base}/og.png" />\n  </head>` : '</head>')
 const abs = (path: string) => `${site}${base}${path}`
