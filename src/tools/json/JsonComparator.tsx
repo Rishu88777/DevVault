@@ -63,10 +63,10 @@ export function JsonComparator() {
     <>
       <div className="grid gap-5 lg:grid-cols-2">
         <ToolSection title="JSON A (original)">
-          <CodeEditor ref={edA} label="JSON A" value={a} onChange={(v) => { setA(v); setCurrent(0) }} height="h-56" errorLine={err?.side === 'A' ? err.line : undefined} emptyHint="Paste or type the first JSON document…" />
+          <CodeEditor ref={edA} label="JSON A" value={a} onChange={(v) => { setA(v); setCurrent(0) }} height="h-[max(14rem,30dvh)]" errorLine={err?.side === 'A' ? err.line : undefined} emptyHint="Paste or type the first JSON document…" />
         </ToolSection>
         <ToolSection title="JSON B (changed)">
-          <CodeEditor ref={edB} label="JSON B" value={b} onChange={(v) => { setB(v); setCurrent(0) }} height="h-56" errorLine={err?.side === 'B' ? err.line : undefined} emptyHint="Paste or type the second JSON document…" />
+          <CodeEditor ref={edB} label="JSON B" value={b} onChange={(v) => { setB(v); setCurrent(0) }} height="h-[max(14rem,30dvh)]" errorLine={err?.side === 'B' ? err.line : undefined} emptyHint="Paste or type the second JSON document…" />
         </ToolSection>
       </div>
 
@@ -85,8 +85,8 @@ export function JsonComparator() {
         {!ok ? (
           <p className="rounded-md border-2 border-dashed border-input px-4 py-10 text-center text-sm text-muted-foreground">Paste JSON into both boxes — differences appear here automatically, side by side.</p>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[1fr_17rem]" aria-live="polite">
-            <div ref={scroller} className="max-h-[38rem] overflow-auto rounded-md border-2 border-input bg-background font-mono text-[13px] leading-5" role="region" aria-label="Side-by-side differences" tabIndex={0}>
+          <div className="grid gap-4 lg:grid-cols-[1fr_20rem]" aria-live="polite">
+            <div ref={scroller} className="max-h-[calc(100dvh-9rem)] min-h-[16rem] overflow-auto rounded-md border-2 border-input bg-background font-mono text-[14px] leading-[22px]" role="region" aria-label="Side-by-side differences" tabIndex={0}>
               <table className="w-full min-w-[34rem] table-fixed border-collapse">
                 <colgroup><col className="w-8" /><col /><col className="w-8" /><col /></colgroup>
                 <thead className="sticky top-0 z-10 bg-card text-xs text-muted-foreground"><tr><th colSpan={2} className="border-b border-r border-border px-3 py-1.5 text-left font-medium">JSON A</th><th colSpan={2} className="border-b border-border px-3 py-1.5 text-left font-medium">JSON B</th></tr></thead>
@@ -111,7 +111,7 @@ export function JsonComparator() {
                   <Button size="icon-sm" variant="ghost" aria-label="Next difference" onClick={() => go(current + 1)}><ChevronRight /></Button>
                 </div>
               )}
-              <ul className="max-h-[34rem] space-y-2 overflow-auto">
+              <ul className="max-h-[calc(100dvh-13rem)] space-y-2 overflow-auto">
                 {ok.changes.map((c, i) => (
                   <li key={i}>
                     <button type="button" onClick={() => go(i)} className={cn('w-full rounded-md border bg-card p-2.5 text-left text-[13px] leading-snug transition-colors hover:bg-muted', i === current ? 'border-accent' : 'border-border')}>

@@ -12,12 +12,13 @@ const s = (o: Record<string, string | boolean>, k: string) => o[k] as string
 
 const base64EncodeSpec: TransformSpec = {
   emptyHint: 'Type or paste text to encode — or choose a file.', errorTitle: 'Unable to encode', outputLabel: 'Base64', filename: 'encoded.txt',
-  fileHandler: (bytes) => bytesToBase64(bytes),
+  fileHandler: (bytes) => bytesToBase64(bytes), bulk: 'b64enc',
   run: (i) => base64Encode(i),
 }
 export const Base64Encoder = make(base64EncodeSpec)
 const base64DecodeSpec: TransformSpec = {
-  emptyHint: 'Paste Base64 to decode it.', errorTitle: 'Invalid Base64', outputLabel: 'Decoded text', filename: 'decoded.txt', run: (i) => base64Decode(i),
+  emptyHint: 'Paste Base64 to decode it.', errorTitle: 'Invalid Base64', outputLabel: 'Decoded text', filename: 'decoded.txt', bulk: 'b64dec',
+  run: (i) => { try { return base64Decode(i) } catch (e) { throw new Error(`${(e as Error).message} For an image or other file, use the Base64 to Image tool.`) } },
 }
 export const Base64Decoder = make(base64DecodeSpec)
 export const Base64UrlEncoder = make({

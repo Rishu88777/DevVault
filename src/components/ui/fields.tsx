@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils'
 const field = 'w-full rounded-md border-2 border-input bg-muted/40 px-3 text-sm transition-colors placeholder:text-muted-foreground/80 hover:border-muted-foreground/50 focus-visible:border-ring focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-0 disabled:opacity-50'
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...p }, ref) => (
-  <input ref={ref} className={cn(field, 'h-9', className)} {...p} />
+  <input ref={ref} className={cn(field, 'h-10 text-[15px]', className)} {...p} />
 ))
 Input.displayName = 'Input'
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...p }, ref) => (
-  <textarea ref={ref} spellCheck={false} autoCapitalize="off" autoCorrect="off" className={cn(field, 'min-h-[7rem] resize-y py-2 font-mono text-[13px] leading-relaxed', className)} {...p} />
+  <textarea ref={ref} spellCheck={false} autoCapitalize="off" autoCorrect="off" className={cn(field, 'min-h-[7rem] resize-y py-2.5 font-mono text-[15px] leading-6', className)} {...p} />
 ))
 Textarea.displayName = 'Textarea'
 
@@ -37,10 +37,10 @@ export function Select({ value, onChange, options, label, hint, className, ...p 
   const id = useId()
   const el = (
     <div className="relative">
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={cn(field, 'h-9 cursor-pointer appearance-none pr-8', className)} {...p}>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={cn(field, 'h-10 cursor-pointer appearance-none pr-8 text-[15px]', className)} {...p}>
         {options.map((o) => <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>)}
       </select>
-      <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-2.5 size-4 text-muted-foreground" />
+      <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-3 size-4 text-muted-foreground" />
     </div>
   )
   return label ? <Field label={label} hint={hint} htmlFor={id}>{el}</Field> : el

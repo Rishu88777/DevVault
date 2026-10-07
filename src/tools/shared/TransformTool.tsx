@@ -1,4 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { BULK_THRESHOLD, useBulkWorker } from '@/hooks/useBulkWorker'
+import { useLiveResult } from '@/hooks/useLiveResult'
 import { FileUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Select } from '@/components/ui/fields'
@@ -21,6 +23,8 @@ export interface TransformSpec {
   filename?: string
   /** Optional file → output handler (e.g. Base64 of a file). */
   fileHandler?: (bytes: Uint8Array, opts: OptValues) => string
+  /** Option-less Base64 ops that run in a Web Worker once the input is large. */
+  bulk?: 'b64enc' | 'b64dec'
   errorTitle: string
 }
 
@@ -32,10 +36,12 @@ export function TransformTool({ spec }: { spec: TransformSpec }) {
   const [fileError, setFileError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const result = useMemo(() => {
-    if (input === '') return { output: '', error: null as string | null }
-    try { return { output: spec.run(input, opts), error: null } } catch (e) { return { output: '', error: errorMessage(e) } }
-  }, [input, opts, spec])
+  const bulk = useBulkWorker()
+  const big = input.length > BULK_THRESHOLD
+  const { value: out, error: runError } = useLiveResult(
+    () => (spec.bulk && big ? bulk<string>(spec.bulk, input) : spec.run(input, opts)),
+    [input, opts, spec, big], { enabled: input !== '', delay: input.length > 20_000 ? 250 : 0 })
+  const result = { output: input === '' ? '' : out ?? '', error: input !== '' && runError ? errorMessage(runError) : null }
 
   const output = file ? file.output : result.output
   const error = file ? fileError : result.error
@@ -45,6 +51,13 @@ export function TransformTool({ spec }: { spec: TransformSpec }) {
   const onFile = async (f: File | undefined) => {
     if (!f || !spec.fileHandler) return
     try {
+      if (spec.bulk === 'b64enc') {
+        // native FileReader conversion is far faster than encoding large files in JavaScript
+        const uri = await new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = () => rej(new Error('The browser could not read this file.')); r.readAsDataURL(f) })
+        setFile({ name: f.name, output: uri.slice(uri.indexOf(',') + 1) })
+        setFileError(null)
+        return
+      }
       const bytes = new Uint8Array(await f.arrayBuffer())
       setFile({ name: f.name, output: spec.fileHandler(bytes, opts) })
       setFileError(null)
@@ -54,7 +67,7 @@ export function TransformTool({ spec }: { spec: TransformSpec }) {
 
   return (
     <>
-      <ToolInput label={spec.inputLabel ?? 'Input'} value={input} onChange={(v) => { setInput(v); setFile(null) }} placeholder={spec.placeholder} emptyHint={spec.emptyHint} onClear={clear}
+      <ToolInput label={spec.inputLabel ?? 'Input'} value={input} onChange={(v) => { setInput(v); setFile(null) }} placeholder={spec.placeholder} emptyHint={spec.emptyHint} onClear={clear} height="h-[max(11rem,26dvh)]"
         actions={spec.fileHandler && <>
           <input ref={fileRef} type="file" className="sr-only" aria-label="Choose a file to encode" onChange={(e) => onFile(e.target.files?.[0])} />
           <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}><FileUp /> Encode a file…</Button>

@@ -32,7 +32,7 @@ export function ToolCard({ tool }: { tool: ToolDefinition }) {
 
 export function ToolGrid({ tools }: { tools: ToolDefinition[] }) {
   return (
-    <motion.ul variants={staggerParent} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <motion.ul variants={staggerParent} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-40px' }} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {tools.map((t) => <ToolCard key={t.id} tool={t} />)}
     </motion.ul>
   )

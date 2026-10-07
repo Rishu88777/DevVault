@@ -42,9 +42,9 @@ export function JsonFormatter({ initialMode = 'format' }: { initialMode?: 'forma
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <ToolSection title="Input" actions={input ? <ClearButton onClick={clear} /> : null}>
-          <CodeEditor ref={editor} label="JSON input" value={input} onChange={setInput} errorLine={bad?.line} emptyHint="Paste or type JSON here — it is formatted automatically." height="h-[26rem]" />
+          <CodeEditor ref={editor} label="JSON input" value={input} onChange={setInput} errorLine={bad?.line} emptyHint="Paste or type JSON here — it is formatted automatically." height="h-[max(20rem,calc(100dvh-19rem))]" />
         </ToolSection>
-        <ToolOutput label={mode === 'minify' ? 'Minified' : 'Formatted'} value={output} language="json" height="h-[26rem]" filename="result.json" mime="application/json" emptyTitle="Formatted JSON appears here." onClear={clear}
+        <ToolOutput label={mode === 'minify' ? 'Minified' : 'Formatted'} value={output} language="json" height="h-[max(20rem,calc(100dvh-19rem))]" filename="result.json" mime="application/json" emptyTitle="Formatted JSON appears here." onClear={clear}
           error={bad ? `${bad.message} at line ${bad.line}, column ${bad.column}.` : fatal ? 'Unable to process this JSON.' : null} errorTitle={bad ? 'Invalid JSON' : 'Unable to process JSON'}
           errorAction={bad ? <Button size="sm" onClick={() => editor.current?.jumpTo(bad.position)}>Jump to error</Button> : undefined} />
       </div>

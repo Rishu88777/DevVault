@@ -49,33 +49,38 @@ function AesPanel({ dir }: { dir: Dir }) {
   return (
     <Panel title={`AES ${enc ? 'Encryption' : 'Decryption'}`} category="Encryption">
       <Field label={enc ? 'Enter plain text to encrypt' : `Enter ${cipherFmt === 'hex' ? 'hex' : 'Base64'} ciphertext to decrypt`}>
-        <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} aria-label={enc ? 'Plaintext' : 'Ciphertext'} placeholder={enc ? 'Type or paste the text you want to encrypt…' : 'Paste the encrypted text you want to decrypt…'} />
+        <Textarea value={text} onChange={(e) => setText(e.target.value)} className="h-[max(8rem,18dvh)]" aria-label={enc ? 'Plaintext' : 'Ciphertext'} placeholder={enc ? 'Type or paste the text you want to encrypt…' : 'Paste the encrypted text you want to decrypt…'} />
       </Field>
 
-      <Field label={`Secret key (${bits / 8} bytes for AES-${bits})`}>
-        <div className="flex gap-2">
-          <Input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} aria-label={`${dir} secret key`} className="font-mono" placeholder={`Enter a ${bits / 8}-byte secret key`} />
-          {enc && <Tooltip label={`Generate random ${bits}-bit key`}><Button size="icon" aria-label="Generate random key" onClick={() => { setKeyFmt('hex'); setKey(bytesToHex(generateAesKey(bits))) }}><KeyRound /></Button></Tooltip>}
+      <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Field label={`Secret key (${bits / 8} bytes for AES-${bits})`}>
+            <div className="flex gap-2">
+              <Input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} aria-label={`${dir} secret key`} className="font-mono" placeholder={`Enter a ${bits / 8}-byte secret key`} />
+              {enc && <Tooltip label={`Generate random ${bits}-bit key`}><Button size="icon" aria-label="Generate random key" onClick={() => { setKeyFmt('hex'); setKey(bytesToHex(generateAesKey(bits))) }}><KeyRound /></Button></Tooltip>}
+            </div>
+          </Field>
+          <Pills label="Secret key format" value={keyFmt} onChange={setKeyFmt} items={FMT} />
         </div>
-      </Field>
-      <Field label="Secret key format"><Pills label="Secret key format" value={keyFmt} onChange={setKeyFmt} items={FMT} /></Field>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Select label="Cipher mode" value={mode} onChange={(v) => setMode(v as AesMode)} options={[{ value: 'GCM', label: 'GCM (recommended)' }, { value: 'CBC', label: 'CBC' }, { value: 'CTR', label: 'CTR' }, { value: 'ECB', label: 'ECB (not supported)', disabled: true }]} />
-        <Select label="Key size in bits" value={String(bits)} onChange={(v) => setBits(Number(v) as AesKeyBits)} options={[{ value: '128', label: '128' }, { value: '192', label: '192' }, { value: '256', label: '256' }]} />
+        <div className="grid grid-cols-2 gap-3">
+          <Select label="Cipher mode" value={mode} onChange={(v) => setMode(v as AesMode)} options={[{ value: 'GCM', label: 'GCM (recommended)' }, { value: 'CBC', label: 'CBC' }, { value: 'CTR', label: 'CTR' }, { value: 'ECB', label: 'ECB (not supported)', disabled: true }]} />
+          <Select label="Key size (bits)" value={String(bits)} onChange={(v) => setBits(Number(v) as AesKeyBits)} options={[{ value: '128', label: '128' }, { value: '192', label: '192' }, { value: '256', label: '256' }]} />
+        </div>
+        <div className="space-y-2">
+          <Field label={`${info.ivLabel} — optional`}>
+            <Input value={iv} onChange={(e) => setIv(e.target.value)} aria-label={`${dir} IV`} className="font-mono" placeholder={enc ? 'Empty = secure random' : prepend ? 'Empty = read from ciphertext' : `${info.ivBytes} bytes`} />
+          </Field>
+          <Pills label="IV format" value={ivFmt} onChange={setIvFmt} items={FMT} />
+        </div>
+        <div className="space-y-2">
+          <Field label={enc ? 'Output format' : 'Ciphertext format'}><Pills label="Ciphertext format" value={cipherFmt} onChange={setCipherFmt} items={[{ value: 'base64', label: 'Base64' }, { value: 'hex', label: 'Hex' }]} /></Field>
+          <label className="flex cursor-pointer items-start gap-2 text-sm"><input type="checkbox" className="mt-1 accent-[hsl(var(--accent))]" checked={prepend} onChange={(e) => setPrepend(e.target.checked)} /> <span>{enc ? `Put the ${info.ivBytes}-byte IV at the start of the output` : `IV is the first ${info.ivBytes} bytes of the ciphertext`}</span></label>
+        </div>
       </div>
-      <p className="-mt-2 text-xs text-muted-foreground">{info.authenticated ? 'GCM is authenticated: it detects wrong keys and tampering. Tag: 16 bytes, appended.' : `AES-${mode} is not authenticated — tampering is not detected. Prefer GCM.`} ECB is not offered because it is insecure.</p>
-
-      <Field label={`${info.ivLabel} — optional`}>
-        <Input value={iv} onChange={(e) => setIv(e.target.value)} aria-label={`${dir} IV`} className="font-mono" placeholder={enc ? 'Empty = secure random' : prepend ? 'Empty = read from start of ciphertext' : `${info.ivBytes} bytes`} />
-      </Field>
-      <Field label="IV format"><Pills label="IV format" value={ivFmt} onChange={setIvFmt} items={FMT} /></Field>
-      <label className="flex cursor-pointer items-start gap-2 text-sm"><input type="checkbox" className="mt-1 accent-[hsl(var(--accent))]" checked={prepend} onChange={(e) => setPrepend(e.target.checked)} /> <span>{enc ? `Put the ${info.ivBytes}-byte IV at the start of the output` : `The IV is the first ${info.ivBytes} bytes of the ciphertext`}</span></label>
-
-      <Field label={enc ? 'Output text format' : 'Ciphertext format'}><Pills label="Ciphertext format" value={cipherFmt} onChange={setCipherFmt} items={[{ value: 'base64', label: 'Base64' }, { value: 'hex', label: 'Hex' }]} /></Field>
+      <p className="text-xs text-muted-foreground">{info.authenticated ? 'GCM is authenticated: it detects wrong keys and tampering (16-byte tag appended).' : `AES-${mode} is not authenticated — tampering is not detected. Prefer GCM.`} ECB is not offered because it is insecure.</p>
 
       <p className={cn('rounded-md px-3 py-2 text-xs', ready ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground')}>{ready ? (enc ? 'Encrypting automatically as you type.' : 'Decrypting automatically as you type.') : `Enter ${enc ? 'text' : 'ciphertext'} and a secret key — the result appears automatically.`}</p>
-      <ToolOutput label={enc ? 'AES encrypted output' : 'AES decrypted output'} value={result} error={error?.message} errorHints={error?.hints} errorTitle={enc ? 'Unable to encrypt' : 'Unable to decrypt data'} onClear={clear} wrapLong shortcuts={false} height="h-32" emptyTitle="The result appears here automatically." filename={enc ? 'ciphertext.txt' : 'plaintext.txt'} />
+      <ToolOutput label={enc ? 'AES encrypted output' : 'AES decrypted output'} value={result} error={error?.message} errorHints={error?.hints} errorTitle={enc ? 'Unable to encrypt' : 'Unable to decrypt data'} onClear={clear} wrapLong shortcuts={false} height="h-[max(8rem,18dvh)]" emptyTitle="The result appears here automatically." filename={enc ? 'ciphertext.txt' : 'plaintext.txt'} />
       {usedIv && !prepend && <p className="text-xs text-muted-foreground">IV used (hex): <code className="break-all font-mono">{usedIv}</code> — keep it, you need it to decrypt.</p>}
     </Panel>
   )
@@ -83,7 +88,7 @@ function AesPanel({ dir }: { dir: Dir }) {
 
 export default function AesTool() {
   return (
-    <div className="grid gap-x-10 gap-y-12 lg:grid-cols-2">
+    <div className="grid gap-6 xl:grid-cols-2">
       <AesPanel dir="encrypt" />
       <AesPanel dir="decrypt" />
     </div>

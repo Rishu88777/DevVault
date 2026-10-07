@@ -18,9 +18,9 @@ function FormatterShell({ inputLabel, empty, run, extra, outputName, mime, langu
   useToolShortcuts({ clear })
   return (
     <>
-      <ToolInput label={inputLabel} value={input} onChange={setInput} rows={10} emptyHint={empty} onClear={clear} />
+      <ToolInput label={inputLabel} value={input} onChange={setInput} height="h-[max(14rem,34dvh)]" emptyHint={empty} onClear={clear} />
       {extra && <ToolSettings>{extra}</ToolSettings>}
-      <ToolOutput label="Output" value={input.trim() ? out : ''} error={err} errorTitle="Unable to format" onClear={clear} filename={outputName} mime={mime} language={language} height="h-72" />
+      <ToolOutput label="Output" value={input.trim() ? out : ''} error={err} errorTitle="Unable to format" onClear={clear} filename={outputName} mime={mime} language={language} height="h-[max(14rem,28dvh)]" />
     </>
   )
 }

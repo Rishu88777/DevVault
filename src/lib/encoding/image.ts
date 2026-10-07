@@ -17,16 +17,27 @@ export function sniffImage(b: Uint8Array): ImageSniff | null {
   return null
 }
 
+/** Strips an optional data URI prefix, returning the raw Base64 payload. */
+export function extractBase64(input: string): string {
+  const t = input.trim()
+  const m = t.match(/^data:([^;,]*)(;[^,]*)?,/i)
+  if (!m) return t
+  if (!/;base64/i.test(m[2] ?? '')) throw new Error('Only Base64 data URIs are supported (data:image/png;base64,…).')
+  return t.slice(m[0].length)
+}
+
+export function imageFromBytes(bytes: Uint8Array): ImageSniff {
+  if (bytes.length === 0) throw new Error('Nothing to decode.')
+  const sniffed = sniffImage(bytes)
+  if (!sniffed) throw new Error('The decoded data is not a recognised image (PNG, JPEG, GIF, WebP, BMP, ICO or SVG).')
+  return sniffed
+}
+
 export interface ParsedImage { bytes: Uint8Array; mime: string; ext: string; dataUri: string }
 
 /** Accepts a data URI (data:image/png;base64,…) or raw Base64 and returns bytes + detected type. */
 export function parseBase64Image(input: string): ParsedImage {
-  const t = input.trim()
-  const m = t.match(/^data:([^;,]*)(;[^,]*)?,([\s\S]*)$/i)
-  if (m && !/;base64/i.test(m[2] ?? '')) throw new Error('Only Base64 data URIs are supported (data:image/png;base64,…).')
-  const bytes = base64ToBytes(m ? m[3] : t)
-  if (bytes.length === 0) throw new Error('Nothing to decode.')
-  const sniffed = sniffImage(bytes)
-  if (!sniffed) throw new Error('The decoded data is not a recognised image (PNG, JPEG, GIF, WebP, BMP, ICO or SVG).')
+  const bytes = base64ToBytes(extractBase64(input))
+  const sniffed = imageFromBytes(bytes)
   return { bytes, ...sniffed, dataUri: `data:${sniffed.mime};base64,${bytesToBase64(bytes)}` }
 }

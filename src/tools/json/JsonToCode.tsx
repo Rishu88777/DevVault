@@ -30,7 +30,7 @@ export function JsonToCode() {
         <Select label="Language" value={lang} onChange={setLang} options={CODE_GENERATORS.map((g) => ({ value: g.id, label: g.label }))} className="w-52" />
         <Field label="Root type name"><Input value={root} onChange={(e) => setRoot(e.target.value)} className="w-44" aria-label="Root type name" /></Field>
       </ToolSettings>
-      <ToolOutput label={`${gen.label} output`} value={result.out} error={result.error} errorTitle="Invalid JSON" onClear={() => setInput('')} filename={`types.${gen.extension}`} height="h-72" emptyTitle="Generated code will appear here." />
+      <ToolOutput label={`${gen.label} output`} value={result.out} error={result.error} errorTitle="Invalid JSON" onClear={() => setInput('')} filename={`types.${gen.extension}`} height="h-[max(14rem,28dvh)]" emptyTitle="Generated code will appear here." />
     </>
   )
 }

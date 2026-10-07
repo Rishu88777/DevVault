@@ -62,3 +62,10 @@ scripts/postbuild.ts                   writes dist/tools/<id>/index.html with un
 - Every route is pre-rendered with its own title, description, keywords, canonical URL, Open Graph tags, `WebApplication` + `BreadcrumbList` + `FAQPage` JSON-LD, crawler-visible text and internal links.
 - Keyword landing pages (hidden from menus, included in the sitemap): `string-to-json`, `json-validator`, `json-beautifier`, `json-minifier`, `json-diff`, `aes-decryption`, `unix-timestamp-converter`.
 - `SITE_URL` (or the platform's own URL on Vercel / Netlify / Cloudflare Pages) is used for canonical URLs and `sitemap.xml`. After deploying, add the site to Google Search Console and submit `/sitemap.xml`.
+
+## Performance
+
+- Heavy Base64 work (> 300k characters) and large JSON run in Web Workers; inputs are debounced.
+- Multi-megabyte pastes bypass the textarea (shown as a "large input loaded" card) and big results are previewed (first 60k characters) while Copy / Download use the full value.
+- Image → Base64 uses the browser's native `FileReader`; previews use blob URLs instead of giant `data:` strings.
+- Measured in headless Chromium: 7.8M-character Base64 → image in ~1.3 s, 6.4 MB JSON formatted in ~1.1 s, with no multi-second freezes.

@@ -35,7 +35,7 @@ export default function Home() {
   const link = (id: string) => { const t = toolById(id)!; return <Link to={t.path} className="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-accent">{t.name}</Link> }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-14">
+    <div className="mx-auto max-w-[88rem] space-y-14">
       <section className="relative pt-2 text-center sm:pt-8" aria-labelledby="hero-h">
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
           <p className="mx-auto mb-5 inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground"><Lock className="size-3 text-accent" aria-hidden /> Processed locally in your browser</p>

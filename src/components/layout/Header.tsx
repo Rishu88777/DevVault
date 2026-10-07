@@ -16,7 +16,7 @@ export function Header({ onOpenMobile }: { onOpenMobile: () => void }) {
   const { open } = usePalette()
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-1 px-3 sm:px-4">
+      <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-1 px-3 sm:px-4">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMobile} aria-label="Open navigation"><Menu /></Button>
         <Link to="/" className="mr-3 flex items-center gap-2 rounded-md px-1 font-semibold tracking-tight" aria-label="DevCipher home"><LogoMark /> <span>DevCipher</span></Link>
 
