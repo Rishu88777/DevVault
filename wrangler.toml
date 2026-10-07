@@ -1,0 +1,4 @@
+# Cloudflare Pages: `npm run build && npx wrangler pages deploy` publishes ./dist
+name = "devcipher"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-01-01"

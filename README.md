@@ -69,3 +69,16 @@ scripts/postbuild.ts                   writes dist/tools/<id>/index.html with un
 - Multi-megabyte pastes bypass the textarea (shown as a "large input loaded" card) and big results are previewed (first 60k characters) while Copy / Download use the full value.
 - Image → Base64 uses the browser's native `FileReader`; previews use blob URLs instead of giant `data:` strings.
 - Measured in headless Chromium: 7.8M-character Base64 → image in ~1.3 s, 6.4 MB JSON formatted in ~1.1 s, with no multi-second freezes.
+
+## Cloudflare Pages
+
+Dashboard → Workers & Pages → Create → Pages → Connect to Git → pick this repo, then:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Environment variable | `SITE_URL` = `https://devcipher.pages.dev` (use your own domain if you add one) |
+| Environment variable | `NODE_VERSION` = `22` |
+
+Or from a terminal: `npm run build && npx wrangler pages deploy dist --project-name devcipher`.
