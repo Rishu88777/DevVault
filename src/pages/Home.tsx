@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Lock, Search } from 'lucide-react'
 import { CATEGORIES } from '@/data/categories'
-import { popularTools, toolById, toolsByCategory, type ToolDefinition } from '@/data/tools'
+import { TOP_NAV_IDS, popularTools, toolById, toolsByCategory, type ToolDefinition } from '@/data/tools'
 import { useRecent } from '@/hooks/usePrefs'
 import { useSeo } from '@/hooks/useSeo'
 import { modKey } from '@/hooks/useShortcut'
@@ -35,15 +35,14 @@ export default function Home() {
   const link = (id: string) => { const t = toolById(id)!; return <Link to={t.path} className="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:decoration-accent">{t.name}</Link> }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-14">
-      <section className="relative pt-6 text-center sm:pt-12" aria-labelledby="hero-h">
-        <div aria-hidden className="dot-grid pointer-events-none absolute inset-x-0 -top-8 -z-10 h-72" />
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
+    <div className="mx-auto max-w-6xl space-y-14">
+      <section className="relative pt-2 text-center sm:pt-8" aria-labelledby="hero-h">
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
           <p className="mx-auto mb-5 inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1 text-xs text-muted-foreground"><Lock className="size-3 text-accent" aria-hidden /> Processed locally in your browser</p>
-          <h1 id="hero-h" className="text-4xl font-semibold tracking-tight sm:text-6xl">DevCipher</h1>
+          <h1 id="hero-h" className="text-4xl font-semibold tracking-tight sm:text-5xl">DevCipher</h1>
           <p className="mt-3 text-xl font-medium text-foreground/90 sm:text-2xl">Encode. Encrypt. Decode. Transform.</p>
           <p className="mx-auto mt-4 max-w-xl text-balance text-muted-foreground">A fast, privacy-first toolbox for developers. Everything runs locally in your browser — no servers, no accounts, no uploads.</p>
-          <button type="button" onClick={() => open()} aria-label="Search tools" className="mx-auto mt-8 flex h-12 w-full max-w-lg items-center gap-3 rounded-xl border border-input bg-card px-4 text-left text-muted-foreground shadow-card transition-colors hover:border-accent/50">
+          <button type="button" onClick={() => open()} aria-label="Search tools" className="mx-auto mt-6 flex h-12 w-full max-w-lg items-center gap-3 rounded-xl border border-input bg-card px-4 text-left text-muted-foreground shadow-card transition-colors hover:border-accent/50">
             <Search className="size-4" aria-hidden /> <span className="flex-1">Search tools…</span><kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px]">{modKey} K</kbd>
           </button>
         </motion.div>
@@ -52,7 +51,7 @@ export default function Home() {
       {recents.length > 0 && (
         <Section title="Recently used" action={<Button variant="ghost" size="sm" onClick={clear}>Clear</Button>}><ToolGrid tools={recents} /></Section>
       )}
-      <Section id="popular" title="Popular tools" subtitle="The tools developers reach for most."><ToolGrid tools={popularTools().slice(0, 9)} /></Section>
+      <Section id="popular" title="Popular tools" subtitle="The tools developers reach for most."><ToolGrid tools={[...TOP_NAV_IDS.map(toolById).filter((t): t is ToolDefinition => !!t), ...popularTools().filter((t) => !TOP_NAV_IDS.includes(t.id))]} /></Section>
       {CATEGORIES.map((c) => (
         <Section key={c.id} id={c.id.toLowerCase()} title={c.id === 'Web' ? 'Web utilities' : c.id} subtitle={c.description} action={<Link to={`/category/${c.id}`} className="text-sm text-muted-foreground hover:text-foreground">View all →</Link>}>
           <ToolGrid tools={toolsByCategory(c.id)} />

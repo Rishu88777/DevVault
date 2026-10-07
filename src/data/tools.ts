@@ -40,11 +40,19 @@ const enc = () => import('@/tools/encoding/EncodingTools')
  */
 export const TOOLS: ToolDefinition[] = [
   /* ───────── Encoding ───────── */
-  def({ id: 'base64-encoder', name: 'Base64 Encoder', description: 'Encode text or files to Base64', category: 'Encoding', icon: Binary, popular: true,
+  def({ id: 'url-encode-decode', name: 'URL Encode / Decode', description: 'Encode and decode URLs side by side', category: 'Encoding', icon: Link2, popular: true,
+    keywords: ['url', 'encode', 'decode', 'percent', 'uri', 'encodeURIComponent', 'decodeURIComponent', 'query string'], seoTitle: 'URL Encode & Decode Online — Percent Encoding Tool', seoDescription: 'Encode and decode URLs and query strings online. Free URL encoder / decoder (encodeURIComponent, encodeURI, form) that runs locally in your browser.',
+    howItWorks: { title: 'How URL encoding works', body: ['Characters that have special meaning in URLs (such as & = ? / and spaces) are replaced with % followed by their UTF-8 bytes in hex, e.g. a space becomes %20. Decoding reverses it.', '"Component" mode (encodeURIComponent) escapes everything except letters, digits and - _ . ! ~ * \' ( ). "Full URL" mode (encodeURI) keeps URL structure characters like : / ? #. "Form" mode writes spaces as +.'] },
+    load: named(enc, 'UrlEncodeDecode') }),
+  def({ id: 'base64-encode-decode', name: 'Base64 Encode / Decode', description: 'Encode and decode Base64 side by side', category: 'Encoding', icon: Binary, popular: true,
+    keywords: ['base64', 'encode', 'decode', 'b64', 'file', 'text to base64', 'base64 to text'], seoTitle: 'Base64 Encode & Decode Online — Text and Files', seoDescription: 'Encode text and files to Base64 or decode Base64 to text online. Free, private and processed locally in your browser.',
+    howItWorks: { title: 'How Base64 works', body: ['Base64 represents binary data using 64 printable ASCII characters (A–Z, a–z, 0–9, + and /). Every 3 bytes become 4 characters, so output is about 33% larger. "=" padding fills the last group.', 'Text is first converted to UTF-8 bytes, so emoji and non-Latin scripts work. Base64 is an encoding, not encryption — anyone can decode it.'] },
+    load: named(enc, 'Base64EncodeDecode') }),
+  def({ id: 'base64-encoder', name: 'Base64 Encoder', description: 'Encode text or files to Base64', category: 'Encoding', icon: Binary, 
     keywords: ['base64', 'encode', 'b64', 'binary to text', 'file'], seoTitle: 'Base64 Encoder Online', seoDescription: 'Encode text and files to Base64 directly in your browser with DevCipher.',
     howItWorks: { title: 'How Base64 encoding works', body: ['Base64 represents binary data using 64 printable ASCII characters (A–Z, a–z, 0–9, + and /). Every 3 bytes become 4 characters, so output is about 33% larger. "=" padding fills the last group.', 'Text is first converted to UTF-8 bytes, so emoji and non-Latin scripts encode correctly. Base64 is an encoding, not encryption — anyone can decode it.'] },
     load: named(enc, 'Base64Encoder') }),
-  def({ id: 'base64-decoder', name: 'Base64 Decoder', description: 'Decode Base64 back to text', category: 'Encoding', icon: Binary, popular: true,
+  def({ id: 'base64-decoder', name: 'Base64 Decoder', description: 'Decode Base64 back to text', category: 'Encoding', icon: Binary, 
     keywords: ['base64', 'decode', 'b64', 'text'], seoTitle: 'Base64 Decoder Online', seoDescription: 'Decode Base64 strings to readable text directly in your browser with DevCipher.',
     howItWorks: { title: 'How Base64 decoding works', body: ['Decoding reverses the encoding: each group of 4 Base64 characters becomes 3 bytes. Whitespace is ignored and missing "=" padding is tolerated.', 'The bytes are then read as UTF-8 text. If they are not valid UTF-8 (for example an image), you will see an error instead of garbled characters.'] },
     load: named(enc, 'Base64Decoder') }),
@@ -56,7 +64,7 @@ export const TOOLS: ToolDefinition[] = [
     keywords: ['base64url', 'url safe', 'jwt', 'decode'],
     howItWorks: { title: 'How Base64URL decoding works', body: ['The URL-safe alphabet is mapped back to standard Base64, padding is restored, and the bytes are decoded as UTF-8 text.'] },
     load: named(enc, 'Base64UrlDecoder') }),
-  def({ id: 'url-encoder', name: 'URL Encoder', description: 'Percent-encode text for URLs', category: 'Encoding', icon: Link2, popular: true,
+  def({ id: 'url-encoder', name: 'URL Encoder', description: 'Percent-encode text for URLs', category: 'Encoding', icon: Link2, 
     keywords: ['url', 'encode', 'percent', 'uri', 'encodeURIComponent', 'query'], seoTitle: 'URL Encoder Online', seoDescription: 'Percent-encode text for safe use in URLs and query strings, locally in your browser.',
     howItWorks: { title: 'How URL encoding works', body: ['Characters that have special meaning in URLs (such as & = ? / and spaces) are replaced with % followed by their UTF-8 bytes in hex, e.g. a space becomes %20.', '"Component" mode (encodeURIComponent) escapes everything except letters, digits and - _ . ! ~ * \' ( ). "Full URL" mode keeps URL structure characters like : / ? #. "Form" mode writes spaces as +.'] },
     load: named(enc, 'UrlEncoder') }),
@@ -98,8 +106,8 @@ export const TOOLS: ToolDefinition[] = [
     load: named(enc, 'HtmlEntityDecoder') }),
 
   /* ───────── Encryption ───────── */
-  def({ id: 'aes-encryption', name: 'AES Encryption', description: 'Encrypt and decrypt with AES-128/192/256', category: 'Encryption', icon: Lock, popular: true, sensitive: true,
-    keywords: ['aes', 'encrypt', 'decrypt', 'gcm', 'cbc', 'ctr', 'symmetric', 'cipher'], seoTitle: 'AES Encryption & Decryption Online', seoDescription: 'Encrypt and decrypt data using AES-128, AES-192 and AES-256 locally in your browser.',
+  def({ id: 'aes-encryption', name: 'AES Encrypt / Decrypt', description: 'AES-128/192/256 encryption and decryption', category: 'Encryption', icon: Lock, popular: true, sensitive: true,
+    keywords: ['aes', 'encrypt', 'decrypt', 'gcm', 'cbc', 'ctr', 'symmetric', 'cipher'], seoTitle: 'AES Encryption & Decryption Online — AES-128, 192, 256', seoDescription: 'Encrypt and decrypt data using AES-128, AES-192 and AES-256 locally in your browser.',
     howItWorks: { title: 'How AES works', body: ['AES is a symmetric encryption algorithm: the same secret key encrypts and decrypts. AES-128, -192 and -256 use 16, 24 and 32-byte keys.', 'GCM is an authenticated mode — it detects tampering and wrong keys, and should be your default. CBC and CTR are unauthenticated: modified ciphertext decrypts to garbage without any error. ECB is not offered because it leaks patterns and the Web Crypto API does not provide it.', 'Never reuse an IV/nonce with the same key. DevCipher generates one with crypto.getRandomValues() when you leave the field empty.'] },
     load: () => import('@/tools/aes/AesTool') }),
   def({ id: 'rsa-tools', name: 'RSA & PEM Tools', description: 'Generate keys, encrypt, decrypt, sign, verify', category: 'Encryption', icon: KeyRound, sensitive: true,
@@ -109,7 +117,7 @@ export const TOOLS: ToolDefinition[] = [
 
   /* ───────── Hashing ───────── */
   def({ id: 'hash-generator', name: 'Hash Generator', description: 'MD5, SHA-1/2/3, SHAKE and BLAKE2', category: 'Hashing', icon: Hash, popular: true,
-    keywords: ['hash', 'sha256', 'sha1', 'md5', 'sha512', 'sha3', 'blake2', 'shake', 'checksum', 'digest'], seoTitle: 'Hash Generator Online — MD5, SHA-256, SHA-512', seoDescription: 'Generate MD5, SHA-1, SHA-2, SHA-3, SHAKE and BLAKE2 hashes locally in your browser.',
+    keywords: ['hash', 'sha256', 'sha1', 'md5', 'sha512', 'sha3', 'blake2', 'shake', 'checksum', 'digest'], seoTitle: 'Hash Generator Online — MD5, SHA-1, SHA-256, SHA-512', seoDescription: 'Generate MD5, SHA-1, SHA-2, SHA-3, SHAKE and BLAKE2 hashes locally in your browser.',
     howItWorks: { title: 'How hashing works', body: ['A hash function turns any input into a fixed-size fingerprint. The same input always gives the same hash, but a tiny change produces a completely different one.', 'Hashing is one-way: a hash cannot be decrypted back to the original. Do not store passwords with plain SHA-256 — use a slow password hashing function such as Argon2, scrypt or bcrypt.', 'SHA-1/256/384/512 use the browser\'s native Web Crypto API. Other algorithms use the audited @noble/hashes library.'] },
     load: named(() => import('@/tools/hash/HashTools'), 'HashGenerator') }),
   def({ id: 'hmac-generator', name: 'HMAC Generator', description: 'Keyed hashes: HMAC-SHA256 and more', category: 'Hashing', icon: Fingerprint, sensitive: true,
@@ -118,12 +126,16 @@ export const TOOLS: ToolDefinition[] = [
     load: named(() => import('@/tools/hash/HashTools'), 'HmacGenerator') }),
 
   /* ───────── JSON ───────── */
+  def({ id: 'json-string', name: 'String ⇄ JSON Converter', description: 'Convert escaped strings to JSON and back', category: 'JSON', icon: Braces, popular: true,
+    keywords: ['string to json', 'json to string', 'stringify', 'escape', 'unescape', 'json string', 'parse', 'serialize', 'escaped json'], seoTitle: 'String to JSON Converter Online — JSON Stringify & Parse', seoDescription: 'Convert an escaped string to JSON, or JSON to an escaped string, online. Unwraps double-encoded JSON. Runs locally in your browser.',
+    howItWorks: { title: 'How string ⇄ JSON conversion works', body: ['APIs and logs often contain JSON stored inside a string, with quotes escaped like {\\"name\\":\\"John\\"}. String → JSON removes the escaping (even when it was applied more than once) and pretty-prints the result.', 'JSON → String does the reverse, like JSON.stringify applied to the JSON text, so you can embed it in another JSON value or in source code.'] },
+    load: named(enc, 'JsonString') }),
   def({ id: 'json-formatter', name: 'JSON Formatter', description: 'Format, validate and minify JSON', category: 'JSON', icon: Braces, popular: true,
-    keywords: ['json', 'formatter', 'pretty print', 'minify', 'validator', 'beautify', 'lint'], seoTitle: 'JSON Formatter & Validator Online', seoDescription: 'Format, validate, minify and inspect JSON directly in your browser.',
+    keywords: ['json', 'formatter', 'pretty print', 'minify', 'validator', 'beautify', 'lint'], seoTitle: 'JSON Formatter & Validator Online — Beautify and Minify JSON', seoDescription: 'Format, validate, minify and inspect JSON directly in your browser.',
     howItWorks: { title: 'How the JSON formatter works', body: ['The text is parsed with a strict JSON parser. If it is valid it is re-serialised with your chosen indentation (pretty print) or with no whitespace (minify).', 'When the JSON is invalid, DevCipher shows the line and column of the first problem — common causes are trailing commas, single quotes and unquoted keys.'] },
     load: named(() => import('@/tools/json/JsonTools'), 'JsonFormatter') }),
   def({ id: 'json-comparator', name: 'JSON Comparator', description: 'Find differences between two JSON documents', category: 'JSON', icon: GitCompare, popular: true,
-    keywords: ['json', 'compare', 'diff', 'difference', 'comparator', 'changes'],
+    keywords: ['json', 'compare', 'diff', 'difference', 'comparator', 'changes', 'side by side'], seoTitle: 'JSON Compare Online — Side-by-Side JSON Diff', seoDescription: 'Compare two JSON documents side by side and see added, removed and changed values. Free JSON diff tool that runs locally in your browser.',
     howItWorks: { title: 'How JSON comparison works', body: ['Both documents are parsed and compared structurally — not as text — so formatting and key order do not matter by default.', 'Differences are listed by path: added, removed or changed values, including nested objects and arrays. You can also ignore array order, whitespace inside strings, or specific fields such as id or updatedAt.'] },
     load: named(() => import('@/tools/json/JsonTools'), 'JsonComparator') }),
   def({ id: 'json-tree', name: 'JSON Tree Viewer', description: 'Explore JSON as an expandable tree', category: 'JSON', icon: ListTree,
@@ -209,3 +221,6 @@ export const popularTools = () => TOOLS.filter((t) => t.popular)
 export const toolTitle = (t: ToolDefinition) => `${t.seoTitle ?? t.name} — DevCipher`
 export const toolDescription = (t: ToolDefinition) => t.seoDescription ?? `${t.description} directly in your browser with DevCipher. Nothing is uploaded.`
 
+
+/** Quick links shown in the top navigation. */
+export const TOP_NAV_IDS = ['json-formatter', 'json-comparator', 'aes-encryption', 'url-encode-decode', 'base64-encode-decode', 'json-string']

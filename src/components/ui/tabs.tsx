@@ -22,3 +22,17 @@ export function Tabs<T extends string>({ value, onChange, items, label, classNam
     </div>
   )
 }
+
+/** Compact pill selector for short option lists (e.g. Plain Text / Base64 / Hex). */
+export function Pills<T extends string>({ value, onChange, items, label }: { value: T; onChange: (v: T) => void; items: TabItem<T>[]; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
+      {items.map((t) => (
+        <button key={t.value} type="button" role="radio" aria-checked={t.value === value} onClick={() => onChange(t.value)}
+          className={cn('rounded-full border px-3 py-1 text-xs font-medium transition-colors', t.value === value ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground hover:text-foreground')}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}

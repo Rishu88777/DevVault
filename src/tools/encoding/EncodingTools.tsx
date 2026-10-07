@@ -2,20 +2,23 @@ import {
   base64Decode, base64Encode, base64UrlDecode, base64UrlEncode, binaryDecode, binaryEncode, bytesToBase64, hexDecode, hexEncode,
   htmlDecode, htmlEncode, unicodeDecode, unicodeEncode, urlDecode, urlEncode, type UnicodeStyle,
 } from '@/lib/encoding'
+import { jsonToString, stringToJson } from '@/lib/formatting/jsonString'
 import { TransformTool, type TransformSpec } from '../shared/TransformTool'
 
 const make = (spec: TransformSpec) => () => <TransformTool spec={spec} />
 const b = (o: Record<string, string | boolean>, k: string) => o[k] as boolean
 const s = (o: Record<string, string | boolean>, k: string) => o[k] as string
 
-export const Base64Encoder = make({
+const base64EncodeSpec: TransformSpec = {
   emptyHint: 'Type or paste text to encode — or choose a file.', errorTitle: 'Unable to encode', outputLabel: 'Base64', filename: 'encoded.txt',
   fileHandler: (bytes) => bytesToBase64(bytes),
   run: (i) => base64Encode(i),
-})
-export const Base64Decoder = make({
+}
+export const Base64Encoder = make(base64EncodeSpec)
+const base64DecodeSpec: TransformSpec = {
   emptyHint: 'Paste Base64 to decode it.', errorTitle: 'Invalid Base64', outputLabel: 'Decoded text', filename: 'decoded.txt', run: (i) => base64Decode(i),
-})
+}
+export const Base64Decoder = make(base64DecodeSpec)
 export const Base64UrlEncoder = make({
   emptyHint: 'Type or paste text to encode.', errorTitle: 'Unable to encode', outputLabel: 'Base64URL', filename: 'encoded.txt',
   options: [{ id: 'pad', type: 'checkbox', label: 'Keep "=" padding', default: false }],
@@ -25,17 +28,19 @@ export const Base64UrlDecoder = make({
   emptyHint: 'Paste Base64URL to decode it.', errorTitle: 'Invalid Base64URL', outputLabel: 'Decoded text', filename: 'decoded.txt', run: (i) => base64UrlDecode(i),
 })
 
-export const UrlEncoder = make({
+const urlEncodeSpec: TransformSpec = {
   emptyHint: 'Type or paste text to percent-encode.', errorTitle: 'Unable to encode', outputLabel: 'Encoded', filename: 'encoded.txt',
   options: [{ id: 'mode', type: 'select', label: 'Mode', default: 'component', options: [
     { value: 'component', label: 'Component (encodeURIComponent)' }, { value: 'full', label: 'Full URL (encodeURI)' }, { value: 'form', label: 'Form (space → +)' }] }],
   run: (i, o) => urlEncode(i, s(o, 'mode') as 'component' | 'full' | 'form'),
-})
-export const UrlDecoder = make({
+}
+export const UrlEncoder = make(urlEncodeSpec)
+const urlDecodeSpec: TransformSpec = {
   emptyHint: 'Paste a percent-encoded string to decode it.', errorTitle: 'Unable to decode', outputLabel: 'Decoded', filename: 'decoded.txt',
   options: [{ id: 'plus', type: 'checkbox', label: 'Treat + as space (form data)', default: false }],
   run: (i, o) => urlDecode(i, b(o, 'plus')),
-})
+}
+export const UrlDecoder = make(urlDecodeSpec)
 
 export const HexEncoder = make({
   emptyHint: 'Type or paste text to convert to hex.', errorTitle: 'Unable to encode', outputLabel: 'Hex', filename: 'hex.txt',
@@ -78,3 +83,29 @@ export const HtmlEntityEncoder = make({
 export const HtmlEntityDecoder = make({
   emptyHint: 'Paste text containing entities such as &amp; or &#65;.', errorTitle: 'Unable to decode', outputLabel: 'Decoded', filename: 'decoded.txt', run: (i) => htmlDecode(i),
 })
+
+/** Side-by-side Encode | Decode, like the classic single-page encoder tools. */
+const dual = (enc: TransformSpec, dec: TransformSpec) => () => (
+  <div className="grid gap-x-8 gap-y-10 lg:grid-cols-2">
+    <div className="space-y-4"><h2 className="text-base font-semibold">Encode</h2><TransformTool spec={enc} /></div>
+    <div className="space-y-4"><h2 className="text-base font-semibold">Decode</h2><TransformTool spec={dec} /></div>
+  </div>
+)
+export const UrlEncodeDecode = dual(urlEncodeSpec, urlDecodeSpec)
+export const Base64EncodeDecode = dual(base64EncodeSpec, base64DecodeSpec)
+
+const toStringSpec: TransformSpec = {
+  inputLabel: 'JSON', outputLabel: 'String', emptyHint: 'Paste JSON to turn it into an escaped string.', errorTitle: 'Invalid JSON', filename: 'string.txt',
+  options: [{ id: 'min', type: 'checkbox', label: 'Minify first', default: true }], run: (i, o) => jsonToString(i, b(o, 'min')),
+}
+const toJsonSpec: TransformSpec = {
+  inputLabel: 'String', outputLabel: 'JSON', emptyHint: 'Paste an escaped / stringified JSON string.', errorTitle: 'Unable to convert', filename: 'result.json',
+  options: [{ id: 'indent', type: 'select', label: 'Indentation', default: '2', options: [{ value: '2', label: '2 spaces' }, { value: '4', label: '4 spaces' }] }],
+  run: (i, o) => stringToJson(i, Number(s(o, 'indent'))),
+}
+export const JsonString = () => (
+  <div className="grid gap-x-8 gap-y-10 lg:grid-cols-2">
+    <div className="space-y-4"><h2 className="text-base font-semibold">String → JSON</h2><TransformTool spec={toJsonSpec} /></div>
+    <div className="space-y-4"><h2 className="text-base font-semibold">JSON → String</h2><TransformTool spec={toStringSpec} /></div>
+  </div>
+)

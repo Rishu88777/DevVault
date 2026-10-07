@@ -1,30 +1,31 @@
 import { useState } from 'react'
-import { KeyRound, Lock, LockOpen, Shuffle } from 'lucide-react'
+import { KeyRound, Lock, LockOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/fields'
-import { Tabs } from '@/components/ui/tabs'
+import { Field, Input, Select, Textarea } from '@/components/ui/fields'
+import { Pills } from '@/components/ui/tabs'
 import { Tooltip } from '@/components/ui/tooltip'
-import { Notice } from '@/components/common/Feedback'
-import { ToolActions, ToolInput, ToolOutput, ToolSection, ToolSettings } from '@/components/tool/parts'
-import { useToolShortcuts } from '@/hooks/useShortcut'
+import { ToolOutput } from '@/components/tool/parts'
+import { useShortcut } from '@/hooks/useShortcut'
 import {
   AES_MODES, DecryptError, aesDecrypt, aesEncrypt, decodeCipher, encodeCipher, generateAesKey, parseAesKey, type AesKeyBits, type AesMode, type KeyFormat,
 } from '@/lib/crypto/aes'
-import { bytesToBase64, bytesToHex, hexToBytes, base64ToBytes, utf8Decode, utf8Encode } from '@/lib/encoding/bytes'
+import { base64ToBytes, bytesToHex, hexToBytes, utf8Decode, utf8Encode } from '@/lib/encoding/bytes'
 import { errorMessage } from '@/lib/utils'
 
-type Direction = 'encrypt' | 'decrypt'
-const parseIv = (v: string, f: KeyFormat) => (v.trim() === '' ? undefined : f === 'hex' ? hexToBytes(v) : f === 'base64' ? base64ToBytes(v) : utf8Encode(v))
+type Dir = 'encrypt' | 'decrypt'
+type TextFmt = 'utf8' | 'hex' | 'base64'
+const FMT = [{ value: 'utf8' as const, label: 'Plain Text' }, { value: 'base64' as const, label: 'Base64' }, { value: 'hex' as const, label: 'Hex' }]
+const parseIv = (v: string, f: TextFmt) => (v.trim() === '' ? undefined : f === 'hex' ? hexToBytes(v) : f === 'base64' ? base64ToBytes(v) : utf8Encode(v))
 
-export default function AesTool() {
-  const [dir, setDir] = useState<Direction>('encrypt')
-  const [bits, setBits] = useState<AesKeyBits>(256)
-  const [mode, setMode] = useState<AesMode>('GCM')
+function AesPanel({ dir }: { dir: Dir }) {
+  const enc = dir === 'encrypt'
   const [text, setText] = useState('')
   const [key, setKey] = useState('')
   const [keyFmt, setKeyFmt] = useState<KeyFormat>('utf8')
+  const [mode, setMode] = useState<AesMode>('GCM')
+  const [bits, setBits] = useState<AesKeyBits>(256)
   const [iv, setIv] = useState('')
-  const [ivFmt, setIvFmt] = useState<'hex' | 'base64'>('hex')
+  const [ivFmt, setIvFmt] = useState<TextFmt>('hex')
   const [prepend, setPrepend] = useState(true)
   const [cipherFmt, setCipherFmt] = useState<'base64' | 'hex'>('base64')
   const [result, setResult] = useState('')
@@ -35,74 +36,65 @@ export default function AesTool() {
   const run = async () => {
     setUsedIv('')
     try {
-      const keyBytes = parseAesKey(key, keyFmt, bits)
+      const k = parseAesKey(key, keyFmt, bits)
       const ivBytes = parseIv(iv, ivFmt)
-      if (dir === 'encrypt') {
-        const r = await aesEncrypt({ mode, key: keyBytes, plaintext: utf8Encode(text), iv: ivBytes, prependIv: prepend })
+      if (enc) {
+        const r = await aesEncrypt({ mode, key: k, plaintext: utf8Encode(text), iv: ivBytes, prependIv: prepend })
         setResult(encodeCipher(r.output, cipherFmt))
-        setUsedIv(ivFmt === 'hex' ? bytesToHex(r.iv) : bytesToBase64(r.iv))
+        setUsedIv(bytesToHex(r.iv))
       } else {
-        const plain = await aesDecrypt({ mode, key: keyBytes, data: decodeCipher(text.trim(), cipherFmt), iv: ivBytes, ivPrepended: prepend })
-        setResult(utf8Decode(plain))
+        setResult(utf8Decode(await aesDecrypt({ mode, key: k, data: decodeCipher(text.trim(), cipherFmt), iv: ivBytes, ivPrepended: prepend })))
       }
       setError(null)
     } catch (e) {
       setResult('')
-      setError(e instanceof DecryptError ? { message: e.message, hints: e.hints } : { message: errorMessage(e), hints: dir === 'decrypt' ? ['Incorrect key', 'Incorrect IV', 'Incorrect encoding', 'Invalid ciphertext'] : undefined })
+      setError(e instanceof DecryptError ? { message: e.message, hints: e.hints } : { message: errorMessage(e), hints: enc ? undefined : ['Incorrect key', 'Incorrect IV', 'Incorrect encoding', 'Invalid ciphertext'] })
     }
   }
   const clear = () => { setText(''); setResult(''); setError(null); setUsedIv('') }
-  useToolShortcuts({ run, clear })
-
-  const genKey = () => {
-    const k = generateAesKey(bits)
-    setKeyFmt('hex'); setKey(bytesToHex(k))
-  }
-  const ivBytesNeeded = info.ivBytes
+  useShortcut({ key: 'Enter', mod: true }, () => { if (text && key && document.activeElement?.closest('[data-aes]')?.getAttribute('data-aes') === dir) void run() })
 
   return (
-    <>
-      <Tabs label="Direction" value={dir} onChange={(d) => { setDir(d); setResult(''); setError(null); setText('') }} items={[{ value: 'encrypt', label: 'Encrypt' }, { value: 'decrypt', label: 'Decrypt' }]} />
-      <ToolSettings>
-        <Select label="Algorithm" value={String(bits)} onChange={(v) => setBits(Number(v) as AesKeyBits)} options={[{ value: '128', label: 'AES-128' }, { value: '192', label: 'AES-192' }, { value: '256', label: 'AES-256' }]} className="w-36" />
-        <Select label="Mode" value={mode} onChange={(v) => setMode(v as AesMode)} className="w-56" options={[
-          { value: 'GCM', label: 'GCM (recommended)' }, { value: 'CBC', label: 'CBC' }, { value: 'CTR', label: 'CTR' }, { value: 'ECB', label: 'ECB — unavailable', disabled: true }]} />
-      </ToolSettings>
-      {mode === 'GCM' ? <Notice title="AES-GCM">{info.description}</Notice> : <Notice tone="warning" title={`AES-${mode} is not authenticated`}>{info.description}</Notice>}
-      <ToolInput label={dir === 'encrypt' ? 'Plaintext (UTF-8 text)' : `Ciphertext (${cipherFmt === 'hex' ? 'Hex' : 'Base64'})`} value={text} onChange={setText} rows={6}
-        emptyHint={dir === 'encrypt' ? 'Type or paste the text to encrypt.' : 'Paste the ciphertext to decrypt.'} onClear={clear} />
-      <ToolSection title="Key">
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <Field label={`Secret key — exactly ${bits / 8} bytes`} hint={`${bits}-bit`}>
-            <Input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} aria-label="Secret key" className="font-mono" placeholder={keyFmt === 'utf8' ? `${bits / 8}-character key` : keyFmt === 'hex' ? `${bits / 4} hex digits` : 'Base64 key'} />
-          </Field>
-          <Select label="Key format" value={keyFmt} onChange={(v) => setKeyFmt(v as KeyFormat)} options={[{ value: 'utf8', label: 'UTF-8' }, { value: 'hex', label: 'Hex' }, { value: 'base64', label: 'Base64' }]} className="sm:w-36" />
+    <div className="space-y-4" data-aes={dir}>
+      <h2 className="text-center text-lg font-semibold">AES {enc ? 'Encryption' : 'Decryption'}</h2>
+      <Field label={enc ? 'Enter plain text to encrypt' : `Enter ${cipherFmt === 'hex' ? 'hex' : 'Base64'} ciphertext to decrypt`}>
+        <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} aria-label={enc ? 'Plaintext' : 'Ciphertext'} />
+      </Field>
+
+      <Field label={`Secret key (${bits / 8} bytes for AES-${bits})`}>
+        <div className="flex gap-2">
+          <Input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} aria-label={`${dir} secret key`} className="font-mono" />
+          {enc && <Tooltip label={`Generate random ${bits}-bit key`}><Button size="icon" aria-label="Generate random key" onClick={() => { setKeyFmt('hex'); setKey(bytesToHex(generateAesKey(bits))) }}><KeyRound /></Button></Tooltip>}
         </div>
-        <Button size="sm" onClick={genKey}><KeyRound /> Generate random {bits}-bit key</Button>
-        <p className="text-xs text-muted-foreground">Keys are used as-is (no key derivation). A random key from crypto.getRandomValues() is far stronger than a typed password.</p>
-      </ToolSection>
-      <ToolSection title={info.ivLabel}>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <Textarea value={iv} onChange={(e) => setIv(e.target.value)} rows={1} aria-label="IV or nonce" className="min-h-9 resize-none" placeholder={dir === 'encrypt' ? 'Leave empty to generate a secure random value' : prepend ? 'Not needed — read from the start of the ciphertext' : `${ivBytesNeeded} bytes`} />
-          <Select value={ivFmt} onChange={(v) => setIvFmt(v as 'hex' | 'base64')} options={[{ value: 'hex', label: 'Hex' }, { value: 'base64', label: 'Base64' }]} className="sm:w-36" aria-label="IV format" />
-        </div>
-        <Checkbox label={`Prepend the ${ivBytesNeeded}-byte IV to the output (decrypt: IV is the first ${ivBytesNeeded} bytes of the input)`} checked={prepend} onChange={setPrepend} />
-      </ToolSection>
-      <ToolSettings>
-        <Select label={dir === 'encrypt' ? 'Output format' : 'Ciphertext format'} value={cipherFmt} onChange={(v) => setCipherFmt(v as 'base64' | 'hex')} options={[{ value: 'base64', label: 'Base64' }, { value: 'hex', label: 'Hex' }]} className="w-40" />
-        <p className="max-w-md pb-1 text-xs text-muted-foreground">
-          Output layout: {prepend ? `IV (${ivBytesNeeded} B) ‖ ` : ''}ciphertext{mode === 'GCM' ? ' ‖ 16-byte authentication tag' : mode === 'CBC' ? ' (PKCS#7 padded)' : ''}.
-        </p>
-      </ToolSettings>
-      <ToolActions>
-        <Tooltip label={dir === 'encrypt' ? 'Encrypt' : 'Decrypt'} shortcut="Mod+Enter" side="top">
-          <Button variant="primary" onClick={run} disabled={!text || !key}>{dir === 'encrypt' ? <Lock /> : <LockOpen />} {dir === 'encrypt' ? 'Encrypt' : 'Decrypt'}</Button>
-        </Tooltip>
-        {dir === 'encrypt' && <Button variant="ghost" onClick={() => setIv('')} disabled={!iv}><Shuffle /> Use a new random IV</Button>}
-      </ToolActions>
-      <ToolOutput label="Result" value={result} error={error?.message} errorHints={error?.hints} errorTitle={dir === 'decrypt' ? 'Unable to decrypt data' : 'Unable to encrypt'} onClear={clear} wrapLong filename={dir === 'encrypt' ? 'ciphertext.txt' : 'plaintext.txt'}
-        emptyTitle="The result will appear here." />
-      {usedIv && !prepend && <Notice title={`${info.ivLabel.split(' (')[0]} used`}><code className="break-all font-mono text-xs">{usedIv}</code><br />Keep this — you need it to decrypt.</Notice>}
-    </>
+      </Field>
+      <Field label="Secret key format"><Pills label="Secret key format" value={keyFmt} onChange={setKeyFmt} items={FMT} /></Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Select label="Cipher mode" value={mode} onChange={(v) => setMode(v as AesMode)} options={[{ value: 'GCM', label: 'GCM (recommended)' }, { value: 'CBC', label: 'CBC' }, { value: 'CTR', label: 'CTR' }, { value: 'ECB', label: 'ECB (not supported)', disabled: true }]} />
+        <Select label="Key size in bits" value={String(bits)} onChange={(v) => setBits(Number(v) as AesKeyBits)} options={[{ value: '128', label: '128' }, { value: '192', label: '192' }, { value: '256', label: '256' }]} />
+      </div>
+      <p className="-mt-2 text-xs text-muted-foreground">{info.authenticated ? 'GCM is authenticated: it detects wrong keys and tampering. Tag: 16 bytes, appended.' : `AES-${mode} is not authenticated — tampering is not detected. Prefer GCM.`} ECB is not offered because it is insecure.</p>
+
+      <Field label={`${info.ivLabel} — optional`}>
+        <Input value={iv} onChange={(e) => setIv(e.target.value)} aria-label={`${dir} IV`} className="font-mono" placeholder={enc ? 'Empty = secure random' : prepend ? 'Empty = read from start of ciphertext' : `${info.ivBytes} bytes`} />
+      </Field>
+      <Field label="IV format"><Pills label="IV format" value={ivFmt} onChange={setIvFmt} items={FMT} /></Field>
+      <label className="flex cursor-pointer items-start gap-2 text-sm"><input type="checkbox" className="mt-1 accent-[hsl(var(--accent))]" checked={prepend} onChange={(e) => setPrepend(e.target.checked)} /> <span>{enc ? `Put the ${info.ivBytes}-byte IV at the start of the output` : `The IV is the first ${info.ivBytes} bytes of the ciphertext`}</span></label>
+
+      <Field label={enc ? 'Output text format' : 'Ciphertext format'}><Pills label="Ciphertext format" value={cipherFmt} onChange={setCipherFmt} items={[{ value: 'base64', label: 'Base64' }, { value: 'hex', label: 'Hex' }]} /></Field>
+
+      <Button variant="primary" onClick={run} disabled={!text || !key}>{enc ? <Lock /> : <LockOpen />} {enc ? 'Encrypt' : 'Decrypt'}</Button>
+      <ToolOutput label={enc ? 'AES encrypted output' : 'AES decrypted output'} value={result} error={error?.message} errorHints={error?.hints} errorTitle={enc ? 'Unable to encrypt' : 'Unable to decrypt data'} onClear={clear} wrapLong shortcuts={false} height="h-32" emptyTitle="Result appears here." filename={enc ? 'ciphertext.txt' : 'plaintext.txt'} />
+      {usedIv && !prepend && <p className="text-xs text-muted-foreground">IV used (hex): <code className="break-all font-mono">{usedIv}</code> — keep it, you need it to decrypt.</p>}
+    </div>
+  )
+}
+
+export default function AesTool() {
+  return (
+    <div className="grid gap-x-10 gap-y-12 lg:grid-cols-2">
+      <AesPanel dir="encrypt" />
+      <AesPanel dir="decrypt" />
+    </div>
   )
 }

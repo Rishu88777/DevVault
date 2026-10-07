@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { Star } from 'lucide-react'
 import { motion } from 'motion/react'
-import type { ToolDefinition } from '@/data/tools'
+import { Link } from 'react-router-dom'
+import { toolsByCategory, type ToolDefinition } from '@/data/tools'
 import { useFavorites } from '@/hooks/usePrefs'
 import { Tooltip } from '@/components/ui/tooltip'
 import { PrivacyBadge } from './PrivacyBadge'
@@ -12,11 +13,10 @@ export function ToolHeader({ tool }: { tool: ToolDefinition }) {
   const fav = isFavorite(tool.id)
   const Icon = tool.icon
   return (
-    <header className="flex items-start gap-3.5">
-      <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-accent shadow-card"><Icon className="size-5" aria-hidden /></span>
+    <header className="flex items-start gap-3">
+      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent"><Icon className="size-5" aria-hidden /></span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{tool.category}</p>
-        <h1 className="text-2xl font-semibold tracking-tight">{tool.name}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{tool.name}</h1>
         <p className="mt-1 text-muted-foreground">{tool.description}</p>
       </div>
       <Tooltip label={fav ? 'Remove from favorites' : 'Add to favorites'}>
@@ -39,15 +39,27 @@ export function HowItWorks({ tool }: { tool: ToolDefinition }) {
   )
 }
 
+export function RelatedTools({ tool }: { tool: ToolDefinition }) {
+  const related = toolsByCategory(tool.category).filter((t) => t.id !== tool.id).slice(0, 8)
+  if (related.length === 0) return null
+  return (
+    <nav aria-label="Related tools" className="space-y-2">
+      <h2 className="text-sm font-semibold">More {tool.category} tools</h2>
+      <ul className="flex flex-wrap gap-2">{related.map((t) => <li key={t.id}><Link to={t.path} className="inline-block rounded-full border border-border px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-accent/50 hover:text-foreground">{t.name}</Link></li>)}</ul>
+    </nav>
+  )
+}
+
 /** Consistent frame: title → explanation → [tool UI] → privacy → how it works. */
 export function ToolContainer({ tool, children }: { tool: ToolDefinition; children: ReactNode }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: 'easeOut' }} className="mx-auto w-full max-w-5xl space-y-6">
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: 'easeOut' }} className="mx-auto w-full space-y-6">
       <ToolHeader tool={tool} />
       {tool.sensitive && <PrivacyBadge sensitive />}
       <div className="space-y-5">{children}</div>
       {!tool.sensitive && <PrivacyBadge />}
       <HowItWorks tool={tool} />
+      <RelatedTools tool={tool} />
     </motion.div>
   )
 }

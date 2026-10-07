@@ -8,7 +8,7 @@ const a = 'text-muted-foreground transition-colors hover:text-foreground'
 export function Footer() {
   return (
     <footer className="mt-16 border-t border-border">
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 sm:grid-cols-[1.5fr_1fr_1fr] sm:px-6">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-[1.5fr_1fr_1fr] sm:px-6">
         <div className="space-y-2">
           <p className="flex items-center gap-2 font-semibold"><LogoMark className="size-6" /> DevCipher</p>
           <p className="text-sm text-muted-foreground">Privacy-first developer tools.</p>

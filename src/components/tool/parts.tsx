@@ -46,7 +46,7 @@ export function ToolInput({ label, value, onChange, placeholder, rows = 8, empty
 
 /** Options row between input and action. */
 export function ToolSettings({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('flex flex-wrap items-end gap-x-4 gap-y-3 rounded-lg border border-border bg-card/50 p-3', className)}>{children}</div>
+  return <div className={cn('flex flex-wrap items-end gap-x-4 gap-y-3', className)}>{children}</div>
 }
 
 /** Primary action row (Format, Encrypt …). */

@@ -57,3 +57,26 @@ describe('JSON formatting', () => {
     expect(tokens[1].kind).toBe('key')
   })
 })
+
+import { buildSideBySide } from './sideBySide'
+describe('buildSideBySide', () => {
+  it('aligns rows and marks removed / added / changed lines', () => {
+    const { rows, changes } = buildSideBySide({ name: 'John', age: 3, x: 1 }, { name: 'Rishu', age: 3, y: 2 })
+    expect(changes).toBe(3)
+    const byText = (s: string) => rows.find((r) => r.left.text.includes(s) || r.right.text.includes(s))!
+    expect(byText('"name"')).toMatchObject({ left: { kind: 'changed', text: '  "name": "John",' }, right: { kind: 'changed', text: '  "name": "Rishu",' } })
+    expect(byText('"x"')).toMatchObject({ left: { kind: 'removed' }, right: { kind: 'empty' } })
+    expect(byText('"y"')).toMatchObject({ left: { kind: 'empty' }, right: { kind: 'added' } })
+    expect(byText('"age"').left.kind).toBe('same')
+  })
+  it('reports zero changes for equivalent docs and respects ignored fields', () => {
+    expect(buildSideBySide({ a: [1, { b: 2 }] }, { a: [1, { b: 2 }] }).changes).toBe(0)
+    expect(buildSideBySide({ id: 1, a: 1 }, { id: 2, a: 1 }, { ignoredFields: ['id'] }).changes).toBe(0)
+  })
+  it('handles added array items and nested objects', () => {
+    const { rows, changes } = buildSideBySide({ t: [1] }, { t: [1, { k: 1 }] })
+    expect(changes).toBe(1)
+    expect(rows.filter((r) => r.right.kind === 'added').length).toBe(3)
+    expect(rows.every((r) => r.left.kind !== 'removed')).toBe(true)
+  })
+})

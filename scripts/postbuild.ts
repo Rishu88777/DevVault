@@ -13,19 +13,39 @@ import { TOOLS, toolDescription, toolTitle } from '../src/data/tools'
 const dist = join(import.meta.dirname, '..', 'dist')
 const site = (process.env.SITE_URL ?? '').replace(/\/$/, '')
 const base = (process.env.VITE_BASE ?? '/').replace(/\/$/, '')
-const html = readFileSync(join(dist, 'index.html'), 'utf8')
+const html = readFileSync(join(dist, 'index.html'), 'utf8').replace('</head>', site ? `    <meta property="og:image" content="${site}${base}/og.png" />\n    <meta name="twitter:image" content="${site}${base}/og.png" />\n  </head>` : '</head>')
+const abs = (path: string) => `${site}${base}${path}`
+const link = (path: string, text: string) => `<a href="${base}${path}">${esc(text)}</a>`
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
-interface Page { path: string; title: string; description: string }
+interface Page { path: string; title: string; description: string; h1?: string; body?: string[]; crumbs?: [string, string][]; ld?: object }
+const home: Page = { path: '/', title: 'DevCipher — Free Online Developer Tools', description: 'Privacy-first developer tools for encoding, encryption, hashing, JSON formatting, JWT, URL utilities and more. Everything runs locally in your browser.',
+  body: ['Encode. Encrypt. Decode. Transform. A fast, privacy-first toolbox for developers. Everything runs locally in your browser.', 'Use the JSON Formatter, JSON Compare, AES Encryption and Decryption, URL Encode and Decode, Base64 Encode and Decode, String to JSON converter, Hash Generator, JWT Decoder and UUID Generator — free, with no sign-up and no uploads.'],
+  ld: { '@context': 'https://schema.org', '@type': 'WebSite', name: 'DevCipher', description: 'Developer tools that run locally in your browser.', ...(site ? { url: abs('/') } : {}) } }
 const pages: Page[] = [
-  ...TOOLS.map((t) => ({ path: t.path, title: toolTitle(t), description: toolDescription(t) })),
+  ...TOOLS.map((t): Page => ({
+    path: t.path, title: toolTitle(t), description: toolDescription(t), h1: t.name,
+    body: [t.description + '.', t.howItWorks.title, ...t.howItWorks.body, 'Processed locally in your browser — your input is never uploaded.'],
+    crumbs: [['DevCipher', '/'], [t.category, `/category/${t.category}`], [t.name, t.path]],
+    ld: { '@context': 'https://schema.org', '@type': 'WebApplication', name: t.name, description: toolDescription(t), applicationCategory: 'DeveloperApplication', operatingSystem: 'Any', browserRequirements: 'Requires JavaScript', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+  })),
   ...CATEGORIES.map((c) => ({ path: `/category/${c.id}`, title: `${c.id} Tools — DevCipher`, description: `${c.description}. Free, private and running locally in your browser.` })),
   { path: '/privacy', title: 'Privacy — DevCipher', description: 'DevCipher runs entirely in your browser. No backend, no accounts, no analytics. Learn what is and is not stored locally.' },
   { path: '/docs', title: 'Documentation — DevCipher', description: 'Keyboard shortcuts, tool conventions, security notes and how to add a tool to DevCipher.' },
 ]
 
+
+/** Crawler-visible content inside #root. React replaces it on load (createRoot), so users never see duplicates. */
+function prerender(p: Page): string {
+  const h1 = p.h1 ?? 'DevCipher — Free Online Developer Tools'
+  const paras = (p.body ?? [p.description]).map((t) => `<p>${esc(t)}</p>`).join('')
+  const crumbs = p.crumbs ? `<nav aria-label="Breadcrumb">${p.crumbs.map(([n, u]) => link(u, n)).join(' › ')}</nav>` : ''
+  const tools = `<nav aria-label="All tools"><h2>All developer tools</h2><ul>${TOOLS.map((t) => `<li>${link(t.path, t.name)} — ${esc(t.description)}</li>`).join('')}</ul></nav>`
+  return `<main style="max-width:56rem;margin:0 auto;padding:2rem 1rem">${crumbs}<h1>${esc(h1)}</h1>${paras}${tools}</main>`
+}
+
 function render(p: Page): string {
-  const url = site ? `${site}${base}${p.path}` : ''
+  const url = site ? abs(p.path) : ''
   let out = html
     .replace(/<title>.*?<\/title>/, `<title>${esc(p.title)}</title>`)
     .replace(/(<meta name="description" content=")[^"]*(")/, `$1${esc(p.description)}$2`)
@@ -36,7 +56,12 @@ function render(p: Page): string {
     `<meta name="twitter:description" content="${esc(p.description)}" />`,
     ...(url ? [`<link rel="canonical" href="${url}" />`, `<meta property="og:url" content="${url}" />`] : []),
   ].join('\n    ')
-  return out.replace('</head>', `    ${extra}\n  </head>`)
+  const ld: object[] = []
+  if (p.ld) ld.push(p.ld)
+  if (p.crumbs && site) ld.push({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: p.crumbs.map(([name, u], i) => ({ '@type': 'ListItem', position: i + 1, name, item: abs(u) })) })
+  const ldTags = ld.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('\n    ')
+  out = out.replace('<div id="root"></div>', `<div id="root">${prerender(p)}</div>`)
+  return out.replace('</head>', `    ${extra}\n    ${ldTags}\n  </head>`)
 }
 
 for (const p of pages) {
@@ -44,11 +69,13 @@ for (const p of pages) {
   mkdirSync(dirname(file), { recursive: true })
   writeFileSync(file, render(p))
 }
+writeFileSync(join(dist, 'index.html'), render(home))
 writeFileSync(join(dist, '404.html'), html)
 
 if (site) {
   const urls = ['/', ...pages.map((p) => p.path)]
-  writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${site}${base}${u}</loc></url>`).join('\n')}\n</urlset>\n`)
+  const day = new Date().toISOString().slice(0, 10)
+  writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${abs(u)}</loc><lastmod>${day}</lastmod><priority>${u === '/' ? '1.0' : u.startsWith('/tools/') ? '0.8' : '0.5'}</priority></url>`).join('\n')}\n</urlset>\n`)
   writeFileSync(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${site}${base}/sitemap.xml\n`)
 }
 console.log(`postbuild: wrote ${pages.length} static pages${site ? ' + sitemap.xml' : ' (set SITE_URL for canonical URLs and sitemap)'}`)
