@@ -30,16 +30,8 @@ export function ToolInput({ label, value, onChange, placeholder, rows = 8, empty
 }) {
   const paste = async () => { const t = await readClipboard(); if (t !== null) onChange(t) }
   return (
-    <ToolSection title={label} actions={<>{actions}{value && onClear && <ClearButton onClick={onClear} shortcut={false} />}</>} className={className}>
-      <div className="relative">
-        <Textarea aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} placeholder={emptyHint ? '' : placeholder} rows={rows} className={cn(!mono && 'font-sans text-sm')} />
-        {!value && emptyHint && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
-            <p className="px-4 text-sm text-muted-foreground">{emptyHint}</p>
-            <Button size="sm" className="pointer-events-auto" onClick={paste}><ClipboardPaste /> Paste from Clipboard</Button>
-          </div>
-        )}
-      </div>
+    <ToolSection title={label} actions={<>{actions}{!value && <Button size="sm" variant="ghost" onClick={paste}><ClipboardPaste /> Paste</Button>}{value && onClear && <ClearButton onClick={onClear} shortcut={false} />}</>} className={className}>
+      <Textarea aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} placeholder={emptyHint ?? placeholder} rows={rows} className={cn(!mono && 'font-sans text-sm')} />
     </ToolSection>
   )
 }

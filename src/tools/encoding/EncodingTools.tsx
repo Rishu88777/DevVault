@@ -3,6 +3,7 @@ import {
   htmlDecode, htmlEncode, unicodeDecode, unicodeEncode, urlDecode, urlEncode, type UnicodeStyle,
 } from '@/lib/encoding'
 import { jsonToString, stringToJson } from '@/lib/formatting/jsonString'
+import { Panel } from '@/components/ui/panel'
 import { TransformTool, type TransformSpec } from '../shared/TransformTool'
 
 const make = (spec: TransformSpec) => () => <TransformTool spec={spec} />
@@ -86,9 +87,9 @@ export const HtmlEntityDecoder = make({
 
 /** Side-by-side Encode | Decode, like the classic single-page encoder tools. */
 const dual = (enc: TransformSpec, dec: TransformSpec) => () => (
-  <div className="grid gap-x-8 gap-y-10 lg:grid-cols-2">
-    <div className="space-y-4"><h2 className="text-base font-semibold">Encode</h2><TransformTool spec={enc} /></div>
-    <div className="space-y-4"><h2 className="text-base font-semibold">Decode</h2><TransformTool spec={dec} /></div>
+  <div className="grid gap-6 lg:grid-cols-2">
+    <Panel title="Encode" category="Encoding"><TransformTool spec={enc} /></Panel>
+    <Panel title="Decode" category="Encoding"><TransformTool spec={dec} /></Panel>
   </div>
 )
 export const UrlEncodeDecode = dual(urlEncodeSpec, urlDecodeSpec)
@@ -104,8 +105,8 @@ const toJsonSpec: TransformSpec = {
   run: (i, o) => stringToJson(i, Number(s(o, 'indent'))),
 }
 export const JsonString = () => (
-  <div className="grid gap-x-8 gap-y-10 lg:grid-cols-2">
-    <div className="space-y-4"><h2 className="text-base font-semibold">String → JSON</h2><TransformTool spec={toJsonSpec} /></div>
-    <div className="space-y-4"><h2 className="text-base font-semibold">JSON → String</h2><TransformTool spec={toStringSpec} /></div>
+  <div className="grid gap-6 lg:grid-cols-2">
+    <Panel title="String → JSON" category="JSON"><TransformTool spec={toJsonSpec} /></Panel>
+    <Panel title="JSON → String" category="JSON"><TransformTool spec={toStringSpec} /></Panel>
   </div>
 )

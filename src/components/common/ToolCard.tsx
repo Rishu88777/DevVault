@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Star } from 'lucide-react'
 import type { ToolDefinition } from '@/data/tools'
+import { categoryById } from '@/data/categories'
 import { useFavorites } from '@/hooks/usePrefs'
 import { cn } from '@/lib/utils'
 
@@ -11,10 +12,11 @@ export const fadeUp = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0,
 export function ToolCard({ tool }: { tool: ToolDefinition }) {
   const { isFavorite, toggle } = useFavorites()
   const fav = isFavorite(tool.id)
+  const col = categoryById(tool.category).color
   return (
     <motion.li variants={fadeUp} whileHover={{ y: -2 }} transition={{ duration: 0.15 }} className="group relative">
-      <Link to={tool.path} className="flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-card transition-[border-color,box-shadow] duration-200 hover:border-accent/50 hover:shadow-lift">
-        <span className="flex size-9 items-center justify-center rounded-lg border border-border bg-background text-accent transition-colors group-hover:border-accent/40"><tool.icon className="size-[18px]" aria-hidden /></span>
+      <Link to={tool.path} className={cn('flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-card transition-[border-color,box-shadow] duration-200 hover:shadow-lift', col.hover)}>
+        <span className={cn('flex size-10 items-center justify-center rounded-lg', col.icon)}><tool.icon className="size-[18px]" aria-hidden /></span>
         <span>
           <span className="block pr-6 font-medium leading-tight">{tool.name}</span>
           <span className="mt-1 block text-[13px] leading-snug text-muted-foreground">{tool.description}</span>

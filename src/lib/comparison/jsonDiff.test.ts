@@ -80,3 +80,11 @@ describe('buildSideBySide', () => {
     expect(rows.every((r) => r.left.kind !== 'removed')).toBe(true)
   })
 })
+
+describe('side-by-side change metadata', () => {
+  it('tags the first row of each difference with a readable message', () => {
+    const { rows } = buildSideBySide({ a: 1, x: 2 }, { a: 5, y: 3 })
+    const msgs = rows.flatMap((r) => (r.change ? [r.change.message] : []))
+    expect(msgs).toEqual(['Value at a changed from 1 to 5', 'Missing property “x” from the object on the right side', 'Missing property “y” from the object on the left side'])
+  })
+})

@@ -2,7 +2,7 @@ import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type Selec
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const field = 'w-full rounded-md border border-input bg-background/60 px-3 text-sm transition-colors placeholder:text-muted-foreground/70 hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:opacity-50'
+const field = 'w-full rounded-md border-2 border-input bg-muted/40 px-3 text-sm transition-colors placeholder:text-muted-foreground/80 hover:border-muted-foreground/50 focus-visible:border-ring focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-0 disabled:opacity-50'
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...p }, ref) => (
   <input ref={ref} className={cn(field, 'h-9', className)} {...p} />

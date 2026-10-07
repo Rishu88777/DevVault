@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Star } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
+import { categoryById } from '@/data/categories'
 import { toolsByCategory, type ToolDefinition } from '@/data/tools'
 import { useFavorites } from '@/hooks/usePrefs'
 import { Tooltip } from '@/components/ui/tooltip'
@@ -12,9 +13,10 @@ export function ToolHeader({ tool }: { tool: ToolDefinition }) {
   const { isFavorite, toggle } = useFavorites()
   const fav = isFavorite(tool.id)
   const Icon = tool.icon
+  const col = categoryById(tool.category).color
   return (
     <header className="flex items-start gap-3">
-      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent"><Icon className="size-5" aria-hidden /></span>
+      <span className={'mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl ' + col.icon}><Icon className="size-5" aria-hidden /></span>
       <div className="min-w-0 flex-1">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{tool.name}</h1>
         <p className="mt-1 text-muted-foreground">{tool.description}</p>

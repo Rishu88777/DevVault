@@ -42,7 +42,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, EditorProps>(({ value, on
   }), [value])
 
   return (
-    <div className={cn('relative flex overflow-hidden rounded-md border border-input bg-background/60 font-mono text-[13px] transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring', errorLine && 'border-danger/60', height, className)}>
+    <div className={cn('relative flex overflow-hidden rounded-md border-2 border-input bg-muted/40 font-mono text-[13px] transition-colors focus-within:border-ring focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/30', errorLine && 'border-danger/60', height, className)}>
       <div aria-hidden className="shrink-0 select-none overflow-hidden border-r border-border bg-muted/30 py-2 pl-2 pr-2 text-right leading-5 text-muted-foreground/60" style={{ paddingTop: PAD }}>
         <div style={{ transform: `translateY(${-scroll.top}px)` }}>
           {Array.from({ length: lines }, (_, i) => (
@@ -52,15 +52,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, EditorProps>(({ value, on
       </div>
       <div className="relative min-w-0 flex-1">
         {errorLine ? <div aria-hidden className="pointer-events-none absolute inset-x-0 bg-danger/15" style={{ top: PAD + (errorLine - 1) * LINE_H - scroll.top, height: LINE_H }} /> : null}
-        <textarea ref={ta} aria-label={label} value={value} placeholder={placeholder} wrap="off" spellCheck={false} autoCapitalize="off" autoCorrect="off"
+        <textarea ref={ta} aria-label={label} value={value} placeholder={emptyHint ?? placeholder} wrap="off" spellCheck={false} autoCapitalize="off" autoCorrect="off"
           onChange={(e) => onChange(e.target.value)} onKeyDown={onKeyDown}
           onScroll={(e) => setScroll({ top: e.currentTarget.scrollTop, left: e.currentTarget.scrollLeft })}
           className="absolute inset-0 size-full resize-none bg-transparent px-3 leading-5 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60" style={{ paddingTop: PAD, paddingBottom: PAD, tabSize: 2 }} />
-        {!value && emptyHint && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-4 text-center">
-            <p className="text-sm text-muted-foreground">{emptyHint}</p>
-            <Button size="sm" className="pointer-events-auto" onClick={async () => { const t = await readClipboard(); if (t !== null) onChange(t) }}><ClipboardPaste /> Paste from Clipboard</Button>
-          </div>
+        {!value && (
+          <Button size="sm" variant="ghost" className="absolute right-2 top-2 z-10" onClick={async () => { const t = await readClipboard(); if (t !== null) onChange(t) }}><ClipboardPaste /> Paste</Button>
         )}
       </div>
     </div>

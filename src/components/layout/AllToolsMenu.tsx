@@ -26,7 +26,7 @@ export function AllToolsMenu() {
             className="absolute right-0 top-full z-50 mt-2 grid w-[min(52rem,92vw)] gap-x-6 gap-y-5 rounded-xl border border-border bg-card p-5 shadow-lift sm:grid-cols-2 lg:grid-cols-3">
             {CATEGORIES.map((c) => (
               <div key={c.id}>
-                <Link to={`/category/${c.id}`} onClick={() => setOpen(false)} className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"><c.icon className="size-3.5" /> {c.id}</Link>
+                <Link to={`/category/${c.id}`} onClick={() => setOpen(false)} className={`mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider hover:opacity-80 ${c.color.text}`}><c.icon className="size-3.5" /> {c.id}</Link>
                 <ul>{toolsByCategory(c.id).map((t) => <li key={t.id}><Link to={t.path} onClick={() => setOpen(false)} className="block truncate rounded px-1.5 py-1 text-sm text-foreground/85 hover:bg-muted hover:text-foreground">{t.name}</Link></li>)}</ul>
               </div>
             ))}

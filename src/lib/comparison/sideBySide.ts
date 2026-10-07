@@ -2,7 +2,9 @@ import { DEFAULT_DIFF_OPTIONS, type DiffOptions } from './jsonDiff'
 
 export type LineKind = 'same' | 'added' | 'removed' | 'changed' | 'empty'
 export interface Cell { text: string; kind: LineKind }
-export interface Row { left: Cell; right: Cell }
+export interface Change { type: 'added' | 'removed' | 'changed'; path: string; message: string }
+/** `change` is set on the first row of every difference, for navigation. */
+export interface Row { left: Cell; right: Cell; change?: Change }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const EMPTY: Cell = { text: '', kind: 'empty' }
@@ -43,6 +45,9 @@ export function buildSideBySide(a: unknown, b: unknown, options: Partial<DiffOpt
   const o = { ...DEFAULT_DIFF_OPTIONS, ...options }
   const ignored = new Set(o.ignoredFields.map((s) => s.trim()).filter(Boolean))
   let changes = 0
+  const tag = (rows: Row[], change: Change) => { if (rows[0]) rows[0].change = change; return rows }
+  const show = (v: unknown) => { const t = JSON.stringify(v); return t.length > 40 ? t.slice(0, 40) + '…' : t }
+  const where = (p: string) => (p === '' ? 'root' : p)
 
   const walk = (x: unknown, y: unknown, label: string, comma: string, depth: number, path: string): Row[] => {
     const pad = '  '.repeat(depth)
@@ -54,8 +59,8 @@ export function buildSideBySide(a: unknown, b: unknown, options: Partial<DiffOpt
         const c = i < keys.length - 1 ? ',' : ''
         const lab = `${JSON.stringify(k)}: `, p = join(path, k)
         if (k in x && k in y) rows.push(...walk(x[k], y[k], lab, c, depth + 1, p))
-        else if (k in x) { changes++; rows.push(...pair(block(lines(x[k], lab, c, depth + 1, o, ignored, p), 'removed'), [])) }
-        else { changes++; rows.push(...pair([], block(lines(y[k], lab, c, depth + 1, o, ignored, p), 'added'))) }
+        else if (k in x) { changes++; rows.push(...tag(pair(block(lines(x[k], lab, c, depth + 1, o, ignored, p), 'removed'), []), { type: 'removed', path: p, message: `Missing property “${k}” from the object on the right side` })) }
+        else { changes++; rows.push(...tag(pair([], block(lines(y[k], lab, c, depth + 1, o, ignored, p), 'added')), { type: 'added', path: p, message: `Missing property “${k}” from the object on the left side` })) }
       })
       rows.push(...pair(block([`${pad}}${comma}`], 'same'), block([`${pad}}${comma}`], 'same')))
       return rows
@@ -69,8 +74,8 @@ export function buildSideBySide(a: unknown, b: unknown, options: Partial<DiffOpt
         const p = `${path}[${i}]`
         const lc = i < xs.length - 1 ? ',' : '', rc = i < ys.length - 1 ? ',' : '', c = i < n - 1 ? ',' : ''
         if (i < xs.length && i < ys.length) rows.push(...walk(xs[i], ys[i], '', c, depth + 1, p))
-        else if (i < xs.length) { changes++; rows.push(...pair(block(lines(xs[i], '', lc, depth + 1, o, ignored, p), 'removed'), [])) }
-        else { changes++; rows.push(...pair([], block(lines(ys[i], '', rc, depth + 1, o, ignored, p), 'added'))) }
+        else if (i < xs.length) { changes++; rows.push(...tag(pair(block(lines(xs[i], '', lc, depth + 1, o, ignored, p), 'removed'), []), { type: 'removed', path: p, message: `Array item ${i} is missing from the right side` })) }
+        else { changes++; rows.push(...tag(pair([], block(lines(ys[i], '', rc, depth + 1, o, ignored, p), 'added')), { type: 'added', path: p, message: `Array item ${i} is missing from the left side` })) }
       }
       rows.push(...pair(block([`${pad}]${comma}`], 'same'), block([`${pad}]${comma}`], 'same')))
       return rows
@@ -78,7 +83,7 @@ export function buildSideBySide(a: unknown, b: unknown, options: Partial<DiffOpt
     // primitives or mismatched types
     if (canon(x, o) === canon(y, o)) return pair(block(lines(x, label, comma, depth, o, ignored, path), 'same'), block(lines(y, label, comma, depth, o, ignored, path), 'same'))
     changes++
-    return pair(block(lines(x, label, comma, depth, o, ignored, path), 'changed'), block(lines(y, label, comma, depth, o, ignored, path), 'changed'))
+    return tag(pair(block(lines(x, label, comma, depth, o, ignored, path), 'changed'), block(lines(y, label, comma, depth, o, ignored, path), 'changed')), { type: 'changed', path, message: `Value at ${where(path)} changed from ${show(x)} to ${show(y)}` })
   }
   return { rows: walk(a, b, '', '', 0, ''), changes }
 }

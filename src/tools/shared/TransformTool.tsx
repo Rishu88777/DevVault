@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { FileUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Select } from '@/components/ui/fields'
-import { ToolInput, ToolOutput, ToolSettings, ToolActions } from '@/components/tool/parts'
+import { ToolInput, ToolOutput, ToolSettings } from '@/components/tool/parts'
 import { useToolShortcuts } from '@/hooks/useShortcut'
 import { errorMessage } from '@/lib/utils'
 
@@ -66,7 +66,7 @@ export function TransformTool({ spec }: { spec: TransformSpec }) {
             : <div key={o.id} className="pb-2"><Checkbox label={o.label} checked={opts[o.id] as boolean} onChange={(v) => setOpts((p) => ({ ...p, [o.id]: v }))} /></div>)}
         </ToolSettings>
       )}
-      <ToolActions><span className="text-xs text-muted-foreground">Results update as you type{file ? ` · showing encoded file “${file.name}”` : ''}.</span></ToolActions>
+      {file && <p className="text-xs text-muted-foreground">Showing the encoded file “{file.name}”.</p>}
       <ToolOutput label={spec.outputLabel ?? 'Output'} value={output} error={error} errorTitle={spec.errorTitle} onClear={clear} filename={spec.filename} wrapLong />
     </>
   )

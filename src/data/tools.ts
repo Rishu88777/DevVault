@@ -126,7 +126,7 @@ export const TOOLS: ToolDefinition[] = [
     load: named(() => import('@/tools/hash/HashTools'), 'HmacGenerator') }),
 
   /* ───────── JSON ───────── */
-  def({ id: 'json-string', name: 'String ⇄ JSON Converter', description: 'Convert escaped strings to JSON and back', category: 'JSON', icon: Braces, popular: true,
+  def({ id: 'json-string', name: 'String ⇄ JSON', description: 'Convert escaped strings to JSON and back', category: 'JSON', icon: Braces, popular: true,
     keywords: ['string to json', 'json to string', 'stringify', 'escape', 'unescape', 'json string', 'parse', 'serialize', 'escaped json'], seoTitle: 'String to JSON Converter Online — JSON Stringify & Parse', seoDescription: 'Convert an escaped string to JSON, or JSON to an escaped string, online. Unwraps double-encoded JSON. Runs locally in your browser.',
     howItWorks: { title: 'How string ⇄ JSON conversion works', body: ['APIs and logs often contain JSON stored inside a string, with quotes escaped like {\\"name\\":\\"John\\"}. String → JSON removes the escaping (even when it was applied more than once) and pretty-prints the result.', 'JSON → String does the reverse, like JSON.stringify applied to the JSON text, so you can embed it in another JSON value or in source code.'] },
     load: named(enc, 'JsonString') }),

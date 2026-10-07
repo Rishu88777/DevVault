@@ -10,11 +10,11 @@ import { usePalette } from '@/components/layout/CommandPalette'
 import { ToolGrid } from '@/components/common/ToolCard'
 import { Button } from '@/components/ui/button'
 
-function Section({ id, title, subtitle, children, action }: { id?: string; title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }) {
+function Section({ id, title, subtitle, children, action, bar }: { bar?: string; id?: string; title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id ?? title}-h`} className="scroll-mt-20 space-y-4">
       <div className="flex items-end justify-between gap-4">
-        <div><h2 id={`${id ?? title}-h`} className="text-lg font-semibold tracking-tight">{title}</h2>{subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}</div>
+        <div><h2 id={`${id ?? title}-h`} className="flex items-center gap-2 text-lg font-semibold tracking-tight">{bar && <span aria-hidden className={`h-5 w-1 rounded-full ${bar}`} />}{title}</h2>{subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}</div>
         {action}
       </div>
       {children}
@@ -53,7 +53,7 @@ export default function Home() {
       )}
       <Section id="popular" title="Popular tools" subtitle="The tools developers reach for most."><ToolGrid tools={[...TOP_NAV_IDS.map(toolById).filter((t): t is ToolDefinition => !!t), ...popularTools().filter((t) => !TOP_NAV_IDS.includes(t.id))]} /></Section>
       {CATEGORIES.map((c) => (
-        <Section key={c.id} id={c.id.toLowerCase()} title={c.id === 'Web' ? 'Web utilities' : c.id} subtitle={c.description} action={<Link to={`/category/${c.id}`} className="text-sm text-muted-foreground hover:text-foreground">View all →</Link>}>
+        <Section key={c.id} bar={c.color.bar} id={c.id.toLowerCase()} title={c.id === 'Web' ? 'Web utilities' : c.id} subtitle={c.description} action={<Link to={`/category/${c.id}`} className="text-sm text-muted-foreground hover:text-foreground">View all →</Link>}>
           <ToolGrid tools={toolsByCategory(c.id)} />
         </Section>
       ))}

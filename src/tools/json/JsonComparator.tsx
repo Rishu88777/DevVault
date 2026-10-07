@@ -1,16 +1,15 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeftRight, GitCompare } from 'lucide-react'
+import { ArrowLeftRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox, Field, Input } from '@/components/ui/fields'
-import { Tooltip } from '@/components/ui/tooltip'
 import { CodeEditor, type CodeEditorHandle } from '@/components/common/CodeEditor'
 import { ClearButton } from '@/components/common/ActionButtons'
 import { CopyButton } from '@/components/common/CopyButton'
 import { ErrorMessage } from '@/components/common/Feedback'
-import { ToolActions, ToolSection } from '@/components/tool/parts'
+import { ToolSection } from '@/components/tool/parts'
+import { useLiveResult } from '@/hooks/useLiveResult'
 import { useToolShortcuts } from '@/hooks/useShortcut'
-import { diffJson } from '@/lib/comparison/jsonDiff'
-import { buildSideBySide, type Cell } from '@/lib/comparison/sideBySide'
+import { buildSideBySide, type Cell, type Change, type Row } from '@/lib/comparison/sideBySide'
 import { parseJson } from '@/lib/formatting/json'
 import { cn } from '@/lib/utils'
 
@@ -18,97 +17,113 @@ const EXAMPLE_A = '{\n  "name": "John",\n  "age": 30,\n  "tags": ["a", "b"],\n  
 const EXAMPLE_B = '{\n  "name": "Rishu",\n  "tags": ["a", "c", "d"],\n  "address": { "city": "Paris", "country": "FR" },\n  "age": 30\n}'
 
 const CELL: Record<Cell['kind'], string> = {
-  same: '', empty: 'bg-muted/40', added: 'bg-success/15 text-success', removed: 'bg-danger/15 text-danger', changed: 'bg-warning/15 text-warning',
+  same: '', empty: 'bg-muted/50', added: 'bg-success/20 text-success', removed: 'bg-danger/20 text-danger', changed: 'bg-warning/20 text-warning',
 }
 const MARK: Record<Cell['kind'], string> = { same: ' ', empty: ' ', added: '+', removed: '−', changed: '~' }
+const BADGE: Record<Change['type'], string> = { added: 'bg-success/15 text-success border-success/30', removed: 'bg-danger/15 text-danger border-danger/30', changed: 'bg-warning/15 text-warning border-warning/30' }
 
-type Result = { rows: ReturnType<typeof buildSideBySide>['rows']; changes: number; report: string } | { error: string; side: 'A' | 'B'; line: number }
+type Computed = { ok: true; rows: Row[]; changes: Change[] } | { ok: false; side: 'A' | 'B'; message: string; line: number }
 
+/** Compares automatically as you type or paste — no button. */
 export function JsonComparator() {
   const [a, setA] = useState('')
   const [b, setB] = useState('')
-  const [opts, setOpts] = useState({ ignoreKeyOrder: true, ignoreArrayOrder: false, ignoreStringWhitespace: false })
+  const [ignoreArrayOrder, setIgnoreArrayOrder] = useState(false)
+  const [ignoreStringWhitespace, setIgnoreStringWhitespace] = useState(false)
   const [ignored, setIgnored] = useState('')
-  const [result, setResult] = useState<Result | null>(null)
+  const [current, setCurrent] = useState(0)
   const edA = useRef<CodeEditorHandle>(null)
   const edB = useRef<CodeEditorHandle>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+  const clear = () => { setA(''); setB(''); setCurrent(0) }
+  useToolShortcuts({ clear })
+  const ready = a.trim() !== '' && b.trim() !== ''
 
-  const run = () => {
-    if (!a.trim() || !b.trim()) return
+  const { value: res } = useLiveResult<Computed>(() => {
     const pa = parseJson(a), pb = parseJson(b)
-    if (!pa.ok) return setResult({ side: 'A', error: `${pa.error.message} at line ${pa.error.line}, column ${pa.error.column}.`, line: pa.error.line })
-    if (!pb.ok) return setResult({ side: 'B', error: `${pb.error.message} at line ${pb.error.line}, column ${pb.error.column}.`, line: pb.error.line })
-    const options = { ...opts, ignoredFields: ignored.split(',') }
-    const sbs = buildSideBySide(pa.value, pb.value, options)
-    const report = diffJson(pa.value, pb.value, options).map((d) => `${d.type.toUpperCase()} ${d.path}${'left' in d ? `\n  - ${JSON.stringify(d.left)}` : ''}${'right' in d ? `\n  + ${JSON.stringify(d.right)}` : ''}`).join('\n')
-    setResult({ ...sbs, report })
+    if (!pa.ok) return { ok: false, side: 'A', message: pa.error.message, line: pa.error.line }
+    if (!pb.ok) return { ok: false, side: 'B', message: pb.error.message, line: pb.error.line }
+    const { rows } = buildSideBySide(pa.value, pb.value, { ignoreArrayOrder, ignoreStringWhitespace, ignoredFields: ignored.split(',') })
+    return { ok: true, rows, changes: rows.flatMap((r) => (r.change ? [r.change] : [])) }
+  }, [a, b, ignoreArrayOrder, ignoreStringWhitespace, ignored], { enabled: ready, delay: 200 })
+  const view = ready ? res : undefined
+  const err = view && !view.ok ? view : null
+  const ok = view && view.ok ? view : null
+
+  const rowIndexOf = useMemo(() => (ok ? ok.rows.flatMap((r, i) => (r.change ? [i] : [])) : []), [ok])
+  const go = (n: number) => {
+    if (!ok || ok.changes.length === 0) return
+    const i = (n + ok.changes.length) % ok.changes.length
+    setCurrent(i)
+    scroller.current?.querySelector(`[data-row="${rowIndexOf[i]}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }
-  const clear = () => { setA(''); setB(''); setResult(null) }
-  useToolShortcuts({ run, clear })
-  const err = result && 'error' in result ? result : null
-  const ok = result && 'rows' in result ? result : null
-  const stats = useMemo(() => {
-    if (!ok) return null
-    let added = 0, removed = 0, changed = 0
-    for (const r of ok.rows) { if (r.right.kind === 'added') added++; if (r.left.kind === 'removed') removed++; if (r.left.kind === 'changed') changed++ }
-    return { added, removed, changed }
-  }, [ok])
+  const report = ok ? ok.changes.map((c) => `${c.type.toUpperCase()} ${c.path || '$'}: ${c.message}`).join('\n') : ''
 
   return (
     <>
       <div className="grid gap-5 lg:grid-cols-2">
         <ToolSection title="JSON A (original)">
-          <CodeEditor ref={edA} label="JSON A" value={a} onChange={(v) => { setA(v); setResult(null) }} height="h-72" errorLine={err?.side === 'A' ? err.line : undefined} emptyHint="Paste the first JSON document." />
+          <CodeEditor ref={edA} label="JSON A" value={a} onChange={(v) => { setA(v); setCurrent(0) }} height="h-56" errorLine={err?.side === 'A' ? err.line : undefined} emptyHint="Paste or type the first JSON document…" />
         </ToolSection>
         <ToolSection title="JSON B (changed)">
-          <CodeEditor ref={edB} label="JSON B" value={b} onChange={(v) => { setB(v); setResult(null) }} height="h-72" errorLine={err?.side === 'B' ? err.line : undefined} emptyHint="Paste the second JSON document." />
+          <CodeEditor ref={edB} label="JSON B" value={b} onChange={(v) => { setB(v); setCurrent(0) }} height="h-56" errorLine={err?.side === 'B' ? err.line : undefined} emptyHint="Paste or type the second JSON document…" />
         </ToolSection>
       </div>
 
       <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-        <Checkbox label="Ignore array order" checked={opts.ignoreArrayOrder} onChange={(v) => setOpts((o) => ({ ...o, ignoreArrayOrder: v }))} />
-        <Checkbox label="Ignore whitespace in strings" checked={opts.ignoreStringWhitespace} onChange={(v) => setOpts((o) => ({ ...o, ignoreStringWhitespace: v }))} />
+        <Checkbox label="Ignore array order" checked={ignoreArrayOrder} onChange={setIgnoreArrayOrder} />
+        <Checkbox label="Ignore whitespace in strings" checked={ignoreStringWhitespace} onChange={setIgnoreStringWhitespace} />
         <Field label="Ignore fields (comma-separated)" className="min-w-56 flex-1"><Input value={ignored} onChange={(e) => setIgnored(e.target.value)} placeholder="id, updatedAt, user.token" aria-label="Fields to ignore" /></Field>
-      </div>
-      <p className="-mt-2 text-xs text-muted-foreground">Key order never counts as a difference; both sides are shown in the key order of JSON A.</p>
-
-      <ToolActions>
-        <Tooltip label="Compare" shortcut="Mod+Enter" side="top"><Button variant="primary" onClick={run} disabled={!a.trim() || !b.trim()}><GitCompare /> Compare</Button></Tooltip>
-        <Button onClick={() => { const t = a; setA(b); setB(t); setResult(null) }} disabled={!a && !b}><ArrowLeftRight /> Swap</Button>
-        <Button variant="ghost" onClick={() => { setA(EXAMPLE_A); setB(EXAMPLE_B); setResult(null) }}>Load example</Button>
+        <Button onClick={() => { const t = a; setA(b); setB(t) }} disabled={!a && !b}><ArrowLeftRight /> Swap</Button>
+        <Button variant="ghost" onClick={() => { setA(EXAMPLE_A); setB(EXAMPLE_B) }}>Load example</Button>
         <ClearButton onClick={clear} disabled={!a && !b} />
-      </ToolActions>
+      </div>
 
-      {err && <ErrorMessage title={`Invalid JSON in ${err.side}`} action={<Button size="sm" onClick={() => (err.side === 'A' ? edA : edB).current?.focus()}>Go to editor</Button>}>{err.error}</ErrorMessage>}
+      {err && <ErrorMessage title={`Invalid JSON in ${err.side}`} action={<Button size="sm" onClick={() => (err.side === 'A' ? edA : edB).current?.focus()}>Go to editor</Button>}>{err.message} at line {err.line}.</ErrorMessage>}
 
-      <ToolSection title="Differences" actions={ok && ok.changes > 0 ? <CopyButton value={ok.report} label="Copy report" /> : null}>
+      <ToolSection title={ok ? (ok.changes.length === 0 ? 'No differences' : `Found ${ok.changes.length} difference${ok.changes.length > 1 ? 's' : ''}`) : 'Differences'} actions={ok && ok.changes.length > 0 ? <CopyButton value={report} label="Copy report" /> : null}>
         {!ok ? (
-          <p className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">Paste two JSON documents and press Compare. Differences appear side by side.</p>
-        ) : ok.changes === 0 ? (
-          <p role="status" className="rounded-lg border border-success/40 bg-success/10 p-4 text-sm text-success">No differences — the documents are equivalent with the selected options.</p>
+          <p className="rounded-md border-2 border-dashed border-input px-4 py-10 text-center text-sm text-muted-foreground">Paste JSON into both boxes — differences appear here automatically, side by side.</p>
         ) : (
-          <div className="space-y-2" aria-live="polite">
-            <div className="flex flex-wrap gap-2 text-xs font-medium">
-              <span className="rounded-full bg-muted px-2.5 py-1">{ok.changes} difference{ok.changes > 1 ? 's' : ''}</span>
-              {stats!.changed > 0 && <span className="rounded-full bg-warning/15 px-2.5 py-1 text-warning">~ {stats!.changed} changed</span>}
-              {stats!.removed > 0 && <span className="rounded-full bg-danger/15 px-2.5 py-1 text-danger">− {stats!.removed} removed lines</span>}
-              {stats!.added > 0 && <span className="rounded-full bg-success/15 px-2.5 py-1 text-success">+ {stats!.added} added lines</span>}
-            </div>
-            <div className="max-h-[36rem] overflow-auto rounded-md border border-input bg-background/60 font-mono text-[13px] leading-5" role="region" aria-label="Side-by-side differences" tabIndex={0}>
-              <table className="w-full min-w-[40rem] table-fixed border-collapse"><colgroup><col className="w-8" /><col /><col className="w-8" /><col /></colgroup>
+          <div className="grid gap-4 lg:grid-cols-[1fr_17rem]" aria-live="polite">
+            <div ref={scroller} className="max-h-[38rem] overflow-auto rounded-md border-2 border-input bg-background font-mono text-[13px] leading-5" role="region" aria-label="Side-by-side differences" tabIndex={0}>
+              <table className="w-full min-w-[34rem] table-fixed border-collapse">
+                <colgroup><col className="w-8" /><col /><col className="w-8" /><col /></colgroup>
                 <thead className="sticky top-0 z-10 bg-card text-xs text-muted-foreground"><tr><th colSpan={2} className="border-b border-r border-border px-3 py-1.5 text-left font-medium">JSON A</th><th colSpan={2} className="border-b border-border px-3 py-1.5 text-left font-medium">JSON B</th></tr></thead>
                 <tbody>
                   {ok.rows.map((r, i) => (
-                    <tr key={i}>
-                      <td className={cn('w-8 select-none border-r border-border/50 px-1.5 text-right text-muted-foreground/60', CELL[r.left.kind])}>{MARK[r.left.kind]}</td>
+                    <tr key={i} data-row={i} className={cn(r.change && ok.changes.indexOf(r.change) === current && 'outline outline-2 -outline-offset-2 outline-accent')}>
+                      <td className={cn('select-none border-r border-border/50 px-1.5 text-right text-muted-foreground/60', CELL[r.left.kind])}>{MARK[r.left.kind]}</td>
                       <td className={cn('whitespace-pre-wrap break-all border-r border-border px-2', CELL[r.left.kind])}>{r.left.text}</td>
-                      <td className={cn('w-8 select-none border-r border-border/50 px-1.5 text-right text-muted-foreground/60', CELL[r.right.kind])}>{MARK[r.right.kind]}</td>
+                      <td className={cn('select-none border-r border-border/50 px-1.5 text-right text-muted-foreground/60', CELL[r.right.kind])}>{MARK[r.right.kind]}</td>
                       <td className={cn('whitespace-pre-wrap break-all px-2', CELL[r.right.kind])}>{r.right.text}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            <aside aria-label="Differences list" className="space-y-2">
+              {ok.changes.length > 0 && (
+                <div className="flex items-center justify-between rounded-md border border-border bg-card px-2 py-1 text-sm">
+                  <Button size="icon-sm" variant="ghost" aria-label="Previous difference" onClick={() => go(current - 1)}><ChevronLeft /></Button>
+                  <span className="font-medium">{current + 1} of {ok.changes.length}</span>
+                  <Button size="icon-sm" variant="ghost" aria-label="Next difference" onClick={() => go(current + 1)}><ChevronRight /></Button>
+                </div>
+              )}
+              <ul className="max-h-[34rem] space-y-2 overflow-auto">
+                {ok.changes.map((c, i) => (
+                  <li key={i}>
+                    <button type="button" onClick={() => go(i)} className={cn('w-full rounded-md border bg-card p-2.5 text-left text-[13px] leading-snug transition-colors hover:bg-muted', i === current ? 'border-accent' : 'border-border')}>
+                      <span className={cn('mb-1 inline-block rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase', BADGE[c.type])}>{c.type}</span>
+                      <span className="block break-words">{c.message}</span>
+                      <code className="mt-1 block break-all text-[11px] text-muted-foreground">{c.path || '$'}</code>
+                    </button>
+                  </li>
+                ))}
+                {ok.changes.length === 0 && <li className="rounded-md border border-success/40 bg-success/10 p-3 text-sm text-success">Both documents are equivalent with the selected options.</li>}
+              </ul>
+            </aside>
           </div>
         )}
       </ToolSection>
