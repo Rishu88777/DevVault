@@ -9,13 +9,14 @@ function setMeta(attr: 'name' | 'property', key: string, content: string) {
   el.content = content
 }
 
-export interface SeoInput { title: string; description: string; path: string; jsonLd?: object }
+export interface SeoInput { title: string; description: string; path: string; keywords?: string[]; jsonLd?: object }
 
-export function useSeo({ title, description, path, jsonLd }: SeoInput) {
+export function useSeo({ title, description, path, keywords, jsonLd }: SeoInput) {
   useEffect(() => {
     document.title = title
     const url = (SITE || window.location.origin) + BASE + path
     setMeta('name', 'description', description)
+    if (keywords?.length) setMeta('name', 'keywords', keywords.join(', '))
     setMeta('property', 'og:title', title)
     setMeta('property', 'og:description', description)
     setMeta('property', 'og:url', url)
@@ -29,5 +30,5 @@ export function useSeo({ title, description, path, jsonLd }: SeoInput) {
       if (!ld) { ld = document.createElement('script'); ld.type = 'application/ld+json'; ld.dataset.devcipherLd = ''; document.head.appendChild(ld) }
       ld.textContent = JSON.stringify(jsonLd)
     } else ld?.remove()
-  }, [title, description, path, jsonLd])
+  }, [title, description, path, keywords, jsonLd])
 }

@@ -20,7 +20,7 @@ export default function ToolPage() {
   const tool = toolById(toolId)
   const { push } = useRecent()
   const jsonLd = useMemo(() => tool && ({ '@context': 'https://schema.org', '@type': 'WebApplication', name: tool.name, description: toolDescription(tool), applicationCategory: 'DeveloperApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } }), [tool])
-  useSeo({ title: tool ? toolTitle(tool) : 'Tool not found — DevCipher', description: tool ? toolDescription(tool) : 'This tool does not exist.', path: tool?.path ?? '/', jsonLd: jsonLd ?? undefined })
+  useSeo({ title: tool ? toolTitle(tool) : 'Tool not found — DevCipher', description: tool ? toolDescription(tool) : 'This tool does not exist.', path: tool?.path ?? '/', keywords: tool?.keywords, jsonLd: jsonLd ?? undefined })
   useEffect(() => { if (tool) push(tool.id) }, [tool, push])
   if (!tool) return <NotFound />
   const Tool = tool.component

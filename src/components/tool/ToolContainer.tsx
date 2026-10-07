@@ -3,7 +3,7 @@ import { Star } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { categoryById } from '@/data/categories'
-import { toolsByCategory, type ToolDefinition } from '@/data/tools'
+import { toolFaq, toolsByCategory, type ToolDefinition } from '@/data/tools'
 import { useFavorites } from '@/hooks/usePrefs'
 import { Tooltip } from '@/components/ui/tooltip'
 import { PrivacyBadge } from './PrivacyBadge'
@@ -41,6 +41,17 @@ export function HowItWorks({ tool }: { tool: ToolDefinition }) {
   )
 }
 
+export function Faq({ tool }: { tool: ToolDefinition }) {
+  return (
+    <section aria-labelledby="faq" className="space-y-3">
+      <h2 id="faq" className="text-base font-semibold">Frequently asked questions</h2>
+      <dl className="space-y-3 text-sm">
+        {toolFaq(tool).map((f) => <div key={f.q}><dt className="font-medium">{f.q}</dt><dd className="mt-0.5 text-muted-foreground">{f.a}</dd></div>)}
+      </dl>
+    </section>
+  )
+}
+
 export function RelatedTools({ tool }: { tool: ToolDefinition }) {
   const related = toolsByCategory(tool.category).filter((t) => t.id !== tool.id).slice(0, 8)
   if (related.length === 0) return null
@@ -61,6 +72,7 @@ export function ToolContainer({ tool, children }: { tool: ToolDefinition; childr
       <div className="space-y-5">{children}</div>
       {!tool.sensitive && <PrivacyBadge />}
       <HowItWorks tool={tool} />
+      <Faq tool={tool} />
       <RelatedTools tool={tool} />
     </motion.div>
   )

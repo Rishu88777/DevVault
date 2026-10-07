@@ -14,9 +14,9 @@ import type { IndentOption } from '@/lib/formatting/json'
 const INDENTS = [{ value: '2', label: '2 spaces' }, { value: '3', label: '3 spaces' }, { value: '4', label: '4 spaces' }, { value: '8', label: '8 spaces' }, { value: 'tab', label: 'Tab' }]
 
 /** Formats automatically as you type or paste — no button needed. */
-export function JsonFormatter() {
+export function JsonFormatter({ initialMode = 'format' }: { initialMode?: 'format' | 'minify' }) {
   const [input, setInput] = useState('')
-  const [mode, setMode] = useState<'format' | 'minify'>('format')
+  const [mode, setMode] = useState<'format' | 'minify'>(initialMode)
   const [indent, setIndent] = useState('2')
   const [sortKeys, setSortKeys] = useState(false)
   const editor = useRef<CodeEditorHandle>(null)
@@ -51,3 +51,5 @@ export function JsonFormatter() {
     </>
   )
 }
+
+export const JsonMinifier = () => <JsonFormatter initialMode="minify" />

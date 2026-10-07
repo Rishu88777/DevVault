@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useSeo } from '@/hooks/useSeo'
 import { modKey } from '@/hooks/useShortcut'
 import { Kbd } from '@/components/ui/tooltip'
-import { TOOLS } from '@/data/tools'
+import { visibleTools } from '@/data/tools'
 
 const H = ({ children }: { children: React.ReactNode }) => <h2 className="pt-4 text-lg font-semibold tracking-tight">{children}</h2>
 
@@ -12,7 +12,7 @@ export default function Docs() {
   return (
     <article className="mx-auto max-w-3xl space-y-3 leading-relaxed text-foreground/90">
       <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
-      <p className="text-muted-foreground">{TOOLS.length} tools, one consistent layout: title → input → options → action → output → copy / download. Each tool ends with a short “How it works”.</p>
+      <p className="text-muted-foreground">{visibleTools().length} tools, one consistent layout: title → input → options → action → output → copy / download. Each tool ends with a short “How it works”.</p>
 
       <H>Keyboard shortcuts</H>
       <dl className="divide-y divide-border rounded-lg border border-border">

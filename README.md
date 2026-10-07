@@ -4,11 +4,11 @@
 
 There is no backend, database or API. Inputs (JWTs, keys, passwords, JSON …) are processed locally with the Web Crypto API and native browser features. Production builds ship a Content Security Policy with `connect-src 'none'`, fonts are bundled, and there are no analytics.
 
-## Tools (40)
+## Tools (42, plus keyword landing pages)
 
 | Category | Tools |
 | --- | --- |
-| Encoding | URL, Base64 (side-by-side Encode / Decode), Base64URL, Hex, Binary, Unicode, HTML-entity encoders & decoders |
+| Encoding | Image ⇄ Base64, URL, Base64 (side-by-side Encode / Decode), Base64URL, Hex, Binary, Unicode, HTML-entity encoders & decoders |
 | Encryption | AES-128/192/256 (GCM, CBC, CTR), RSA & PEM (keygen, OAEP encrypt/decrypt, PSS & PKCS#1 v1.5 sign/verify) |
 | Hashing | MD5, SHA-1/224/256/384/512, SHA3, SHAKE128/256, BLAKE2b/2s, HMAC |
 | JSON | Formatter/validator, side-by-side comparator, String ⇄ JSON, tree viewer, JSON → TypeScript/JavaScript/Python/Go/Java/C# |
@@ -56,3 +56,9 @@ scripts/postbuild.ts                   writes dist/tools/<id>/index.html with un
 ## Deploy (static)
 
 `npm run build` → publish `dist/`. Set `SITE_URL=https://your.domain` at build time to emit canonical URLs, Open Graph image, JSON-LD breadcrumbs, `sitemap.xml` and `robots.txt` (each route is also pre-rendered with crawler-visible text and internal links); set `VITE_BASE=/repo/` for sub-path hosting (GitHub project pages). `netlify.toml`, `vercel.json` and a `404.html` SPA fallback are included; Cloudflare Pages needs no config.
+
+## SEO
+
+- Every route is pre-rendered with its own title, description, keywords, canonical URL, Open Graph tags, `WebApplication` + `BreadcrumbList` + `FAQPage` JSON-LD, crawler-visible text and internal links.
+- Keyword landing pages (hidden from menus, included in the sitemap): `string-to-json`, `json-validator`, `json-beautifier`, `json-minifier`, `json-diff`, `aes-decryption`, `unix-timestamp-converter`.
+- `SITE_URL` (or the platform's own URL on Vercel / Netlify / Cloudflare Pages) is used for canonical URLs and `sitemap.xml`. After deploying, add the site to Google Search Console and submit `/sitemap.xml`.
